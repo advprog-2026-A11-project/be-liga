@@ -1,7 +1,9 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.5.11"
+    id("jacoco")
+    id("org.springframework.boot") version "3.5.10"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.sonarqube") version "7.1.0.6387"
 }
 
 group = "id.ac.ui.cs.advprog"
@@ -24,6 +26,13 @@ repositories {
     mavenCentral()
 }
 
+sonarqube {
+        properties {
+                property("sonar.projectKey", "advprog-2026-A11-project_be-liga")
+                property("sonar.organization", "adpro-a-kelompok-11")
+        }
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -37,4 +46,10 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.withType<JacocoReport> {
+    reports {
+        xml.required.set(true)
+    }
 }
