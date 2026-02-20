@@ -19,7 +19,8 @@
     <td th:text="${clan.clanName}"></td>
     <td th:text="${clan.getClanScore()}"></td>
     <td>
-      <a th:href="@{/clan/detail/{id}(id=${clan.clanId})}">View Details</a> |
+      <a th:href="@{/clan/detail/{id}(id=${clanId})}">View Details</a> |
+      <a th:href="@{/clan/edit/{id}(id=${clan.clanId})}">Edit Clan</a> |
       <a th:href="@{/clan/delete/{id}(id=${clan.clanId})}">Delete</a>
     </td>
   </tr>
