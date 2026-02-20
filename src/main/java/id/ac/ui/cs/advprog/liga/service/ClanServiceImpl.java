@@ -2,9 +2,9 @@ package id.ac.ui.cs.advprog.liga.service;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
 import id.ac.ui.cs.advprog.liga.repository.ClanRepository;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 public class ClanServiceImpl implements ClanService {
