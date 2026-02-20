@@ -37,7 +37,9 @@ public class ClanServiceImpl implements ClanService {
   @Override
   public void addMember(String clanId, int score) {
     Clan clan = findById(clanId);
-    if (clan != null) clan.getMemberScores().add(score);
+    if (clan != null) {
+      clan.getMemberScores().add(score);
+    }
   }
 
   @Override

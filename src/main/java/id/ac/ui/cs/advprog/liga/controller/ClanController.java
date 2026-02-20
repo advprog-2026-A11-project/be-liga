@@ -73,7 +73,9 @@ public class ClanController {
   }
 
   @GetMapping("/{id}/edit-member/{index}")
-  public String editMemberPage(@PathVariable String id, @PathVariable int index, Model model) {
+  public String editMemberPage(@PathVariable String id,
+                               @PathVariable int index,
+                               Model model) {
     Clan clan = service.findById(id);
     model.addAttribute("clanId", id);
     model.addAttribute("memberIndex", index);
@@ -82,7 +84,9 @@ public class ClanController {
   }
 
   @PostMapping("/{id}/edit-member/{index}")
-  public String editMember(@PathVariable String id, @PathVariable int index, @RequestParam int score) {
+  public String editMember(@PathVariable String id,
+                           @PathVariable int index,
+                           @RequestParam int score) {
     service.editMember(id, index, score);
     return "redirect:/clan/detail/" + id;
   }
