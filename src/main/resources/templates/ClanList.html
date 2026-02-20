@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Clan List</title>
+</head>
+<body>
+<h2>Clan List</h2>
+<a th:href="@{/clan/create}">Create New Clan</a>
+<table border="1">
+  <thead>
+  <tr>
+    <th>Clan Name</th>
+    <th>Total Score</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="clan : ${clans}">
+    <td th:text="${clan.clanName}"></td>
+    <td th:text="${clan.getClanScore()}"></td>
+    <td>
+      <a th:href="@{/clan/detail/{id}(id=${clan.clanId})}">View Details</a> |
+      <a th:href="@{/clan/edit/{id}(id=${clan.clanId})}">Edit Clan</a> |
+      <a th:href="@{/clan/delete/{id}(id=${clan.clanId})}">Delete</a>
+    </td>
+  </tr>
+  </tbody>
+</table>
+</body>
+</html>
