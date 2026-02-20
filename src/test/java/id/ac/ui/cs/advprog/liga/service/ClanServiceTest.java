@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.liga.service;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
 import id.ac.ui.cs.advprog.liga.repository.ClanRepository;
