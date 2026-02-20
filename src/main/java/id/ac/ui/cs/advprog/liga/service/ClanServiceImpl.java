@@ -11,11 +11,28 @@ public class ClanServiceImpl implements ClanService {
   @Autowired
   private ClanRepository clanRepository;
 
-  @Override public Clan create(Clan clan) { return clanRepository.create(clan); }
-  @Override public List<Clan> findAll() { return clanRepository.findAll(); }
-  @Override public Clan findById(String id) { return clanRepository.findById(id); }
-  @Override public void update(Clan clan) { clanRepository.update(clan); }
-  @Override public void delete(String id) { clanRepository.delete(id); }
+  @Override
+  public Clan create(Clan clan) {
+    return clanRepository.create(clan);
+  }
+
+  @Override
+  public List<Clan> findAll() {
+    return clanRepository.findAll();
+  }
+
+  @Override
+  public Clan findById(String id) {
+    return clanRepository.findById(id);
+  }
+
+  @Override public void update(Clan clan) {
+    clanRepository.update(clan);
+  }
+
+  @Override public void delete(String id) {
+    clanRepository.delete(id);
+  }
 
   @Override
   public void addMember(String clanId, int score) {
