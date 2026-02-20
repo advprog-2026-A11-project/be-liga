@@ -1,9 +1,9 @@
 package id.ac.ui.cs.advprog.liga.model;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ClanTest {
   private Clan clan;
