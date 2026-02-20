@@ -13,6 +13,8 @@ public class ClanController {
     @Autowired
     private ClanService service;
 
+    // --- Clan Management ---
+
     @GetMapping("/list")
     public String listClans(Model model) {
         model.addAttribute("clans", service.findAll());
@@ -29,6 +31,25 @@ public class ClanController {
     public String createClan(@ModelAttribute Clan clan) {
         service.create(clan);
         return "redirect:list";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editClanPage(@PathVariable String id, Model model) {
+        Clan clan = service.findById(id);
+        model.addAttribute("clan", clan);
+        return "EditClan";
+    }
+
+    @PostMapping("/edit")
+    public String editClanPost(@ModelAttribute Clan clan) {
+        service.update(clan);
+        return "redirect:list";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deleteClan(@PathVariable String id) {
+        service.delete(id);
+        return "redirect:../list";
     }
 
     @GetMapping("/detail/{id}")
