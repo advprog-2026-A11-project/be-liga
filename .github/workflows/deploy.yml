@@ -1,0 +1,24 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/liga || git clone https://github.com/${{ github.repository }}.git ~/liga
+            cd ~/liga
+            git pull origin main
+            docker compose -f docker-compose.dev.yml up -d --build
