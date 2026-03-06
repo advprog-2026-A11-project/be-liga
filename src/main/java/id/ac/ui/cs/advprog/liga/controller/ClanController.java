@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/clan")
-@CrossOrigin(origins = "*") // In production, replace * with your frontend URL
+@CrossOrigin(origins = "http://localhost:3000")
 public class ClanController {
   @Autowired
   private ClanService service;
@@ -32,9 +32,20 @@ public class ClanController {
   }
 
   @PutMapping("/edit")
-  public ResponseEntity<Clan> editClan(@RequestBody Clan clan) {
-    service.update(clan);
-    return ResponseEntity.ok(clan);
+  public ResponseEntity<Clan> editClan(@RequestBody Clan updatedClan) {
+    // 1. Find the existing clan in the database
+    Clan existingClan = service.findById(updatedClan.getClanId());
+
+    if (existingClan != null) {
+      // 2. Only update the name
+      existingClan.setClanName(updatedClan.getClanName());
+
+      // 3. Save the object that still contains the original members
+      service.update(existingClan);
+      return ResponseEntity.ok(existingClan);
+    }
+
+    return ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/delete/{id}")
