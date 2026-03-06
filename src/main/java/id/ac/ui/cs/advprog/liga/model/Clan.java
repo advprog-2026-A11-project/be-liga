@@ -29,4 +29,22 @@ public class Clan {
   public int getClanScore() {
     return memberScores.stream().mapToInt(Integer::intValue).sum();
   }
+
+  @Transient
+  public String getRankTier() {
+    int score = getClanScore();
+    if (score >= 4000) {
+      return "Diamond";
+    }
+    if (score >= 3000) {
+      return "Platinum";
+    }
+    if (score >= 2000) {
+      return "Gold";
+    }
+    if (score >= 1000) {
+      return "Silver";
+    }
+    return "Bronze";
+  }
 }

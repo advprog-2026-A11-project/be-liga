@@ -20,7 +20,10 @@ public class ClanServiceImpl implements ClanService {
 
   @Override
   public List<Clan> findAll() {
-    return clanRepository.findAll();
+    List<Clan> clans = clanRepository.findAll();
+    // Highest score to lowest score
+    clans.sort((c1, c2) -> Integer.compare(c2.getClanScore(), c1.getClanScore()));
+    return clans;
   }
 
   @Override
