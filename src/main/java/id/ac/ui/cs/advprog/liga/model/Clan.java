@@ -15,19 +15,23 @@ public class Clan {
   @Id
   private String clanId;
   private String clanName;
+  private String leaderId; // NEW: Keeps track of the clan leader's Supabase User ID
 
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "clan_member_scores", joinColumns = @JoinColumn(name = "clan_id"))
-  private List<Integer> memberScores;
+  @CollectionTable(name = "clan_members", joinColumns = @JoinColumn(name = "clan_id"))
+  private List<ClanMember> members = new ArrayList<>();
 
   public Clan() {
     this.clanId = UUID.randomUUID().toString();
-    this.memberScores = new ArrayList<>();
   }
 
-  @Transient // Tells JPA not to try and save this as a column (it's calculated)
+  @Transient
   public int getClanScore() {
-    return memberScores.stream().mapToInt(Integer::intValue).sum();
+    int score = 0;
+    for (ClanMember member: members) {
+      score += member.getScore();
+    }
+    return score;
   }
 
   @Transient
