@@ -32,11 +32,16 @@ public class ClanController {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already in a clan.");
     }
 
-    // 2. Set the creator as the leader
+    // 2. Check if user has a pending application
+    if (service.hasPendingApplication(userId)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You cannot create a clan while you have a pending application. Please cancel it first.");
+    }
+
+    // 3. Set the creator as the leader
     clan.setLeaderId(userId);
     Clan createdClan = service.create(clan);
 
-    // 3. Automatically add the leader as the first member with 0 score
+    // 4. Automatically add the leader as the first member with 0 score
     service.addMember(createdClan.getClanId(), userId, 0);
 
     return ResponseEntity.ok(createdClan);
