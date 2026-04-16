@@ -82,18 +82,26 @@ public class ClanController {
 
   // --- Student Actions ---
 
-  @PostMapping("/{id}/join")
-  public ResponseEntity<?> joinClan(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+  @PostMapping("/{id}/apply")
+  public ResponseEntity<?> applyToClan(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
     String userId = jwt.getSubject();
 
-    // Check if they are already in a clan
     if (service.isUserInAnyClan(userId)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You must quit your current clan before joining a new one.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already in a clan.");
+    }
+    if (service.hasPendingApplication(userId)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You already have a pending application to a clan.");
     }
 
-    // When joining, score defaults to 0. (We will fetch real scores from other modules in the future).
-    service.addMember(id, userId, 0);
-    return ResponseEntity.ok().build();
+    service.applyToClan(id, userId);
+    return ResponseEntity.ok("Application sent successfully!");
+  }
+
+  @DeleteMapping("/{id}/cancel-application")
+  public ResponseEntity<?> cancelApplication(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+    String userId = jwt.getSubject();
+    service.cancelApplication(id, userId);
+    return ResponseEntity.ok("Application canceled.");
   }
 
   @DeleteMapping("/{id}/quit")
@@ -108,5 +116,35 @@ public class ClanController {
 
     service.removeMemberByUserId(id, userId);
     return ResponseEntity.ok().build();
+  }
+
+  // --- Leader Actions ---
+
+  @PostMapping("/{id}/accept/{applicantId}")
+  public ResponseEntity<?> acceptApplicant(@PathVariable String id, @PathVariable String applicantId, @AuthenticationPrincipal Jwt jwt) {
+    Clan clan = service.findById(id);
+    if (clan == null) return ResponseEntity.notFound().build();
+
+    // Security: Only leader can accept
+    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can accept applicants.");
+    }
+
+    service.acceptApplicant(id, applicantId);
+    return ResponseEntity.ok("Applicant accepted!");
+  }
+
+  @PostMapping("/{id}/reject/{applicantId}")
+  public ResponseEntity<?> rejectApplicant(@PathVariable String id, @PathVariable String applicantId, @AuthenticationPrincipal Jwt jwt) {
+    Clan clan = service.findById(id);
+    if (clan == null) return ResponseEntity.notFound().build();
+
+    // Security: Only leader can reject
+    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can reject applicants.");
+    }
+
+    service.rejectApplicant(id, applicantId);
+    return ResponseEntity.ok("Applicant rejected.");
   }
 }

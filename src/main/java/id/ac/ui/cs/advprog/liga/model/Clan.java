@@ -21,6 +21,11 @@ public class Clan {
   @CollectionTable(name = "clan_members", joinColumns = @JoinColumn(name = "clan_id"))
   private List<ClanMember> members = new ArrayList<>();
 
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "clan_applicants", joinColumns = @JoinColumn(name = "clan_id"))
+  @Column(name = "applicant_user_id")
+  private List<String> applicantIds = new ArrayList<>();
+
   public Clan() {
     this.clanId = UUID.randomUUID().toString();
   }

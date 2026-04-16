@@ -91,4 +91,48 @@ public class ClanServiceImpl implements ClanService {
             .anyMatch(clan -> clan.getMembers().stream()
                     .anyMatch(member -> member.getUserId().equals(userId)));
   }
+
+  @Override
+  public boolean hasPendingApplication(String userId) {
+    // Checks if the user is currently in ANY clan's applicant list
+    return findAll().stream()
+            .anyMatch(clan -> clan.getApplicantIds().contains(userId));
+  }
+
+  @Override
+  public void applyToClan(String clanId, String userId) {
+    Clan clan = findById(clanId);
+    if (clan != null && !clan.getApplicantIds().contains(userId)) {
+      clan.getApplicantIds().add(userId);
+      clanRepository.save(clan);
+    }
+  }
+
+  @Override
+  public void acceptApplicant(String clanId, String applicantId) {
+    Clan clan = findById(clanId);
+    if (clan != null && clan.getApplicantIds().contains(applicantId)) {
+      // Remove from applicants
+      clan.getApplicantIds().remove(applicantId);
+      // Add to official members with 0 score
+      clan.getMembers().add(new ClanMember(applicantId, 0));
+      clanRepository.save(clan);
+    }
+  }
+
+  @Override
+  public void rejectApplicant(String clanId, String applicantId) {
+    Clan clan = findById(clanId);
+    if (clan != null) {
+      clan.getApplicantIds().remove(applicantId);
+      clanRepository.save(clan);
+    }
+  }
+
+  @Override
+  public void cancelApplication(String clanId, String userId) {
+    // This does the exact same thing as rejectApplicant, but having
+    // two methods makes our intentions clearer in the controller!
+    rejectApplicant(clanId, userId);
+  }
 }

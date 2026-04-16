@@ -15,6 +15,13 @@ public interface ClanService {
   void removeMemberByUserId(String clanId, String userId);
   void editMemberScore(String clanId, String userId, int newScore);
 
-  // NEW: Business Logic Check
+  // Applicant Operations
+  void applyToClan(String clanId, String userId);
+  void acceptApplicant(String clanId, String applicantId);
+  void rejectApplicant(String clanId, String applicantId);
+  void cancelApplication(String clanId, String userId);
+
+  // Business Logic Check
   boolean isUserInAnyClan(String userId);
+  boolean hasPendingApplication(String userId);
 }
