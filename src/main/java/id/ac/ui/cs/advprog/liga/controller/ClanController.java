@@ -152,4 +152,23 @@ public class ClanController {
     service.rejectApplicant(id, applicantId);
     return ResponseEntity.ok("Applicant rejected.");
   }
+
+  @DeleteMapping("/{id}/kick/{memberId}")
+  public ResponseEntity<?> kickMember(@PathVariable String id, @PathVariable String memberId, @AuthenticationPrincipal Jwt jwt) {
+    Clan clan = service.findById(id);
+    if (clan == null) return ResponseEntity.notFound().build();
+
+    // Security: Only leader can kick
+    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can kick members.");
+    }
+
+    // Logic: Leader cannot kick themselves
+    if (clan.getLeaderId().equals(memberId)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You cannot kick yourself. To leave, you must delete the clan.");
+    }
+
+    service.removeMemberByUserId(id, memberId);
+    return ResponseEntity.ok("Member kicked successfully.");
+  }
 }
