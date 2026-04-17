@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.liga.service;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
+import id.ac.ui.cs.advprog.liga.model.ClanMember;
 import id.ac.ui.cs.advprog.liga.repository.ClanRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,20 +9,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional // Ensures database changes are saved properly
+@Transactional
 public class ClanServiceImpl implements ClanService {
+
   @Autowired
   private ClanRepository clanRepository;
 
   @Override
   public Clan create(Clan clan) {
-    return clanRepository.save(clan); // .save() works for both create and update
+    return clanRepository.save(clan);
   }
 
   @Override
   public List<Clan> findAll() {
     List<Clan> clans = clanRepository.findAll();
-    // Highest score to lowest score
     clans.sort((c1, c2) -> Integer.compare(c2.getClanScore(), c1.getClanScore()));
     return clans;
   }
@@ -31,38 +32,107 @@ public class ClanServiceImpl implements ClanService {
     return clanRepository.findById(id).orElse(null);
   }
 
-  @Override public void update(Clan clan) {
+  @Override
+  public void update(Clan clan) {
     clanRepository.save(clan);
   }
 
-  @Override public void delete(String id) {
+  @Override
+  public void delete(String id) {
     clanRepository.deleteById(id);
   }
 
+  // --- Updated Member Operations ---
+
   @Override
-  public void addMember(String clanId, int score) {
+  public void addMember(String clanId, String userId, int score) {
     Clan clan = findById(clanId);
     if (clan != null) {
-      clan.getMemberScores().add(score);
-      clanRepository.save(clan); // Must save to persist change
+      // Check if user is already in the clan to prevent duplicates
+      boolean alreadyExists = clan.getMembers().stream()
+              .anyMatch(member -> member.getUserId().equals(userId));
+
+      if (!alreadyExists) {
+        clan.getMembers().add(new ClanMember(userId, score));
+        clanRepository.save(clan);
+      }
     }
   }
 
   @Override
-  public void editMember(String clanId, int index, int score) {
+  public void removeMemberByUserId(String clanId, String userId) {
     Clan clan = findById(clanId);
-    if (clan != null && index < clan.getMemberScores().size()) {
-      clan.getMemberScores().set(index, score);
+    if (clan != null) {
+      // Safely removes the member if the userId matches
+      clan.getMembers().removeIf(member -> member.getUserId().equals(userId));
       clanRepository.save(clan);
     }
   }
 
   @Override
-  public void deleteMember(String clanId, int index) {
+  public void editMemberScore(String clanId, String userId, int newScore) {
     Clan clan = findById(clanId);
-    if (clan != null && index < clan.getMemberScores().size()) {
-      clan.getMemberScores().remove(index);
+    if (clan != null) {
+      // Find the specific member and update their score
+      clan.getMembers().stream()
+              .filter(member -> member.getUserId().equals(userId))
+              .findFirst()
+              .ifPresent(member -> {
+                member.setScore(newScore);
+                clanRepository.save(clan);
+              });
+    }
+  }
+
+  @Override
+  public boolean isUserInAnyClan(String userId) {
+    // Checks all clans to see if this userId exists in any member list
+    return findAll().stream()
+            .anyMatch(clan -> clan.getMembers().stream()
+                    .anyMatch(member -> member.getUserId().equals(userId)));
+  }
+
+  @Override
+  public boolean hasPendingApplication(String userId) {
+    // Checks if the user is currently in ANY clan's applicant list
+    return findAll().stream()
+            .anyMatch(clan -> clan.getApplicantIds().contains(userId));
+  }
+
+  @Override
+  public void applyToClan(String clanId, String userId) {
+    Clan clan = findById(clanId);
+    if (clan != null && !clan.getApplicantIds().contains(userId)) {
+      clan.getApplicantIds().add(userId);
       clanRepository.save(clan);
     }
+  }
+
+  @Override
+  public void acceptApplicant(String clanId, String applicantId) {
+    Clan clan = findById(clanId);
+    if (clan != null && clan.getApplicantIds().contains(applicantId)) {
+      // Remove from applicants
+      clan.getApplicantIds().remove(applicantId);
+      // Add to official members with 0 score
+      clan.getMembers().add(new ClanMember(applicantId, 0));
+      clanRepository.save(clan);
+    }
+  }
+
+  @Override
+  public void rejectApplicant(String clanId, String applicantId) {
+    Clan clan = findById(clanId);
+    if (clan != null) {
+      clan.getApplicantIds().remove(applicantId);
+      clanRepository.save(clan);
+    }
+  }
+
+  @Override
+  public void cancelApplication(String clanId, String userId) {
+    // This does the exact same thing as rejectApplicant, but having
+    // two methods makes our intentions clearer in the controller!
+    rejectApplicant(clanId, userId);
   }
 }
