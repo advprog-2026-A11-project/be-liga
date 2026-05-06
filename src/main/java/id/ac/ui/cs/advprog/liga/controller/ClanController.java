@@ -18,6 +18,13 @@ public class ClanController {
   @Autowired
   private ClanService service;
 
+  // NEW HELPER METHOD: Extracts the yomu_user_id from the token
+  // We include a fallback to getSubject() just to be completely safe during the transition!
+  private String getUserIdFromToken(Jwt jwt) {
+      String yomuUserId = jwt.getClaimAsString("yomu_user_id");
+      return (yomuUserId != null && !yomuUserId.isBlank()) ? yomuUserId : jwt.getSubject();
+  }
+
   @GetMapping("/list")
   public List<Clan> listClans() {
     return service.findAll();
@@ -25,7 +32,8 @@ public class ClanController {
 
   @PostMapping("/create")
   public ResponseEntity<?> createClan(@RequestBody Clan clan, @AuthenticationPrincipal Jwt jwt) {
-    String userId = jwt.getSubject();
+    // FIX: Use our new helper method
+    String userId = getUserIdFromToken(jwt);
 
     // 1. Check if user is already in a clan
     if (service.isUserInAnyClan(userId)) {
@@ -58,8 +66,8 @@ public class ClanController {
     Clan existingClan = service.findById(updatedClan.getClanId());
 
     if (existingClan != null) {
-      // Security Check: Only the leader can edit the clan
-      if (!existingClan.getLeaderId().equals(jwt.getSubject())) {
+      // FIX: Use our new helper method for the Security Check
+      if (!existingClan.getLeaderId().equals(getUserIdFromToken(jwt))) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can edit this clan.");
       }
 
@@ -75,12 +83,11 @@ public class ClanController {
     Clan clan = service.findById(id);
     if (clan == null) return ResponseEntity.notFound().build();
 
-    // Security Check: Only the leader can delete the clan
-    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+    // FIX: Use our new helper method for the Security Check
+    if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can delete this clan.");
     }
 
-    // Since we use JPA @ElementCollection, deleting the clan automatically wipes out its member list from the database!
     service.delete(id);
     return ResponseEntity.ok().build();
   }
@@ -89,7 +96,8 @@ public class ClanController {
 
   @PostMapping("/{id}/apply")
   public ResponseEntity<?> applyToClan(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
-    String userId = jwt.getSubject();
+    // FIX: Use our new helper method
+    String userId = getUserIdFromToken(jwt);
 
     if (service.isUserInAnyClan(userId)) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already in a clan.");
@@ -104,17 +112,18 @@ public class ClanController {
 
   @DeleteMapping("/{id}/cancel-application")
   public ResponseEntity<?> cancelApplication(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
-    String userId = jwt.getSubject();
+    // FIX: Use our new helper method
+    String userId = getUserIdFromToken(jwt);
     service.cancelApplication(id, userId);
     return ResponseEntity.ok("Application canceled.");
   }
 
   @DeleteMapping("/{id}/quit")
   public ResponseEntity<?> quitClan(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
-    String userId = jwt.getSubject();
+    // FIX: Use our new helper method
+    String userId = getUserIdFromToken(jwt);
     Clan clan = service.findById(id);
 
-    // Business Logic: A leader cannot just quit. They must delete the clan (or we can add a 'transfer leadership' feature later).
     if (clan != null && clan.getLeaderId().equals(userId)) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Clan leaders cannot quit. You must delete the clan.");
     }
@@ -130,8 +139,8 @@ public class ClanController {
     Clan clan = service.findById(id);
     if (clan == null) return ResponseEntity.notFound().build();
 
-    // Security: Only leader can accept
-    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+    // FIX: Use our new helper method
+    if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can accept applicants.");
     }
 
@@ -144,8 +153,8 @@ public class ClanController {
     Clan clan = service.findById(id);
     if (clan == null) return ResponseEntity.notFound().build();
 
-    // Security: Only leader can reject
-    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+    // FIX: Use our new helper method
+    if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can reject applicants.");
     }
 
@@ -158,12 +167,11 @@ public class ClanController {
     Clan clan = service.findById(id);
     if (clan == null) return ResponseEntity.notFound().build();
 
-    // Security: Only leader can kick
-    if (!clan.getLeaderId().equals(jwt.getSubject())) {
+    // FIX: Use our new helper method
+    if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can kick members.");
     }
 
-    // Logic: Leader cannot kick themselves
     if (clan.getLeaderId().equals(memberId)) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You cannot kick yourself. To leave, you must delete the clan.");
     }
