@@ -2,23 +2,98 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liga-deploy-main
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    timeout-minutes: 20
 
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Java 21
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v4.2.2
+
+      - name: Build bootJar
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar -x test
+
+      - name: Prepare app directory on EC2
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script_stop: true
           script: |
-            cd ~/liga || git clone https://github.com/${{ github.repository }}.git ~/liga
+            set -euo pipefail
+            mkdir -p ~/liga/build/libs
+            rm -f ~/liga/build/libs/*.jar
+
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "build/libs/liga-*[!plain].jar"
+          target: "~/liga/build/libs"
+          strip_components: 2
+
+      - name: Restart app on EC2
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
             cd ~/liga
-            git pull origin main
-            docker compose -f docker-compose.dev.yml up -d --build
+
+            JAR_FILE="$(ls build/libs/liga-*[!plain].jar 2>/dev/null | head -n 1 || true)"
+            if [ -z "$JAR_FILE" ]; then
+              echo "No runnable JAR found in ~/liga/build/libs"
+              exit 1
+            fi
+
+            if [ -f app.pid ] && kill -0 "$(cat app.pid)" 2>/dev/null; then
+              kill "$(cat app.pid)" || true
+              sleep 2
+            fi
+            rm -f app.pid
+
+            EXISTING_PIDS="$(lsof -ti tcp:8080 -sTCP:LISTEN 2>/dev/null || true)"
+            if [ -n "$EXISTING_PIDS" ]; then
+              echo "$EXISTING_PIDS" | xargs -r kill || true
+              sleep 2
+            fi
+
+            if [ -f .env.local ]; then
+              set -a
+              . ./.env.local
+              set +a
+            fi
+
+            nohup java -jar "$JAR_FILE" > app.log 2>&1 < /dev/null &
+            echo $! > app.pid
+
+            echo "App started with PID $(cat app.pid)"
+            echo "Deployed: $(basename "$JAR_FILE")"
