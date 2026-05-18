@@ -5,7 +5,6 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .env
-combined_project_liga.txt
 
 ### STS ###
 .apt_generated
@@ -39,4 +38,4 @@ out/
 .vscode/
 
 .env.local
-clean_bootrun_log.txt
+*.txt
