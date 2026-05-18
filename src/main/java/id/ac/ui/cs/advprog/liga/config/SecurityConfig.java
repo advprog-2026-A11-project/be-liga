@@ -21,16 +21,22 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/clan/list", "/api/clan/detail/**").permitAll() 
-                    .anyRequest().authenticated() 
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {})); 
-    return http.build();
+      http
+          .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+          .csrf(csrf -> csrf.disable())
+          .authorizeHttpRequests(auth -> auth
+              .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+              // Public endpoints
+              .requestMatchers("/api/clan/list", "/api/clan/detail/**").permitAll()
+              // Internal endpoint called by be-bacaan — permit without user JWT
+              .requestMatchers("/api/internal/score-update").permitAll()
+              // Current season info is public
+              .requestMatchers("/api/league/current-season").permitAll()
+              // Everything else needs authentication
+              .anyRequest().authenticated()
+          )
+          .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+      return http.build();
   }
 
   @Bean
