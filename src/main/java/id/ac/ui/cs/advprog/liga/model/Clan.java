@@ -12,48 +12,51 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Clan {
-  @Id
-  private String clanId;
-  private String clanName;
-  private String leaderId; // NEW: Keeps track of the clan leader's Supabase User ID
 
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "clan_members", joinColumns = @JoinColumn(name = "clan_id"))
-  private List<ClanMember> members = new ArrayList<>();
+    @Id
+    private String clanId;
 
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "clan_applicants", joinColumns = @JoinColumn(name = "clan_id"))
-  @Column(name = "applicant_user_id")
-  private List<String> applicantIds = new ArrayList<>();
+    private String clanName;
+    private String leaderId;
 
-  public Clan() {
-    this.clanId = UUID.randomUUID().toString();
-  }
+    // Stored tier — only changes at end of season
+    private String tier = "Bronze";
 
-  @Transient
-  public int getClanScore() {
-    int score = 0;
-    for (ClanMember member: members) {
-      score += member.getScore();
-    }
-    return score;
-  }
+    // Accumulated score for the current season (resets each season)
+    private int seasonScore = 0;
 
-  @Transient
-  public String getRankTier() {
-    int score = getClanScore();
-    if (score >= 4000) {
-      return "Diamond";
+    // Current buff/debuff multiplier (1.0 = no buff, 1.2 = productivity buff, etc.)
+    private double scoreMultiplier = 1.0;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "clan_members", joinColumns = @JoinColumn(name = "clan_id"))
+    private List<ClanMember> members = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "clan_applicants", joinColumns = @JoinColumn(name = "clan_id"))
+    @Column(name = "applicant_user_id")
+    private List<String> applicantIds = new ArrayList<>();
+
+    public Clan() {
+        this.clanId = UUID.randomUUID().toString();
     }
-    if (score >= 3000) {
-      return "Platinum";
+
+    // Raw sum of member scores (used as input to scoring strategy)
+    public int getRawScore() {
+        int total = 0;
+        for (ClanMember member : members) {
+            total += member.getScore();
+        }
+        return total;
     }
-    if (score >= 2000) {
-      return "Gold";
+
+    // Average accuracy across all members
+    public double getAverageAccuracy() {
+        if (members.isEmpty()) return 0.0;
+        double total = 0.0;
+        for (ClanMember member : members) {
+            total += member.getAccuracy();
+        }
+        return total / members.size();
     }
-    if (score >= 1000) {
-      return "Silver";
-    }
-    return "Bronze";
-  }
 }
