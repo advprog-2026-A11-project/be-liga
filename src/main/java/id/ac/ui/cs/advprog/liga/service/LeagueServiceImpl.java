@@ -51,33 +51,40 @@ public class LeagueServiceImpl implements LeagueService {
     public void handleScoreUpdate(ScoreUpdateRequest request) {
         String userId = request.getUserId();
 
-        // Find which clan this user belongs to
-        List<Clan> allClans = clanRepository.findAll();
-        Clan userClan = allClans.stream()
+        Clan userClan = clanRepository.findAll().stream()
                 .filter(clan -> clan.getMembers().stream()
                         .anyMatch(m -> m.getUserId().equals(userId)))
                 .findFirst()
                 .orElse(null);
 
-        // User is not in any clan — nothing to update
+        // Student isn't in any clan — nothing to do
         if (userClan == null) return;
 
-        // Update the specific member's score and accuracy
         List<ClanMember> members = userClan.getMembers();
         for (int i = 0; i < members.size(); i++) {
             ClanMember member = members.get(i);
             if (member.getUserId().equals(userId)) {
-                // Replace with updated member (score accumulates, accuracy is latest)
-                members.set(i, new ClanMember(userId,
-                        member.getScore() + request.getScore(),
-                        request.getAccuracy()));
+                int newScore = member.getScore() + request.getScore();
+
+                // Only update accuracy if this update comes from a quiz (accuracy > 0)
+                // Missions don't affect accuracy
+                double newAccuracy;
+                if (request.getAccuracy() > 0.0) {
+                    // Running average: weight existing average against the new reading
+                    // We don't store quiz count so use a simple smoothing approach:
+                    // new average = (old * 0.8) + (new * 0.2)
+                    // This is an approximation but avoids needing a separate quiz count field
+                    newAccuracy = (member.getAccuracy() * 0.8) + (request.getAccuracy() * 0.2);
+                } else {
+                    newAccuracy = member.getAccuracy();
+                }
+
+                members.set(i, new ClanMember(userId, newScore, newAccuracy));
                 break;
             }
         }
 
-        // Recompute buffs/debuffs and season score
         recalculateClanScore(userClan);
-
         clanRepository.save(userClan);
     }
 
@@ -134,10 +141,13 @@ public class LeagueServiceImpl implements LeagueService {
         for (Clan clan : allClans) {
             clan.setSeasonScore(0);
             clan.setScoreMultiplier(1.0);
-            // Reset each member's accumulated score too
+
+            // Reset each member's season score to 0.
+            // Accuracy is NOT reset — it stays as the lifetime average.
             List<ClanMember> resetMembers = clan.getMembers().stream()
-                    .map(m -> new ClanMember(m.getUserId(), 0, 0.0))
+                    .map(m -> new ClanMember(m.getUserId(), 0, m.getAccuracy()))
                     .toList();
+
             clan.getMembers().clear();
             clan.getMembers().addAll(resetMembers);
         }
