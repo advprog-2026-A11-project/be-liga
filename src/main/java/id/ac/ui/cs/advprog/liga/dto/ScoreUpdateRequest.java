@@ -10,8 +10,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScoreUpdateRequest {
-    private String userId;
-    private int score;
-    private boolean isAQuiz;   // true = quiz completion, false = mission completion
-    private double accuracy;   // only meaningful when isAQuiz = true, otherwise ignored
+  private String userId;
+  private int score;
+  private boolean isAQuiz; // true = quiz completion, false = mission completion
+  private double accuracy; // only meaningful when isAQuiz = true, otherwise ignored
 }

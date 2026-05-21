@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class MissionScoreResponse {
-    private int score;
+  private int score;
 }

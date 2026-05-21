@@ -12,34 +12,34 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "${frontend.url}")
 public class LeagueController {
 
-    private final LeagueService leagueService;
+  private final LeagueService leagueService;
 
-    public LeagueController(LeagueService leagueService) {
-        this.leagueService = leagueService;
-    }
+  public LeagueController(LeagueService leagueService) {
+    this.leagueService = leagueService;
+  }
 
-    // Called by be-bacaan (internal, no JWT needed from user)
-    // be-bacaan calls this right after a student submits a quiz
-    @PostMapping("/api/internal/score-update")
-    public ResponseEntity<Void> receiveScoreUpdate(@RequestBody ScoreUpdateRequest request) {
-        leagueService.handleScoreUpdate(request);
-        return ResponseEntity.ok().build();
-    }
+  // Called by be-bacaan (internal, no JWT needed from user)
+  // be-bacaan calls this right after a student submits a quiz
+  @PostMapping("/api/internal/score-update")
+  public ResponseEntity<Void> receiveScoreUpdate(@RequestBody ScoreUpdateRequest request) {
+    leagueService.handleScoreUpdate(request);
+    return ResponseEntity.ok().build();
+  }
 
-    // Called by admin to end the current season and trigger promotions/degradations
-    @PostMapping("/api/admin/league/end-season")
-    public ResponseEntity<Season> endSeason(@AuthenticationPrincipal Jwt jwt) {
-        Season newSeason = leagueService.endSeason();
-        return ResponseEntity.ok(newSeason);
-    }
+  // Called by admin to end the current season and trigger promotions/degradations
+  @PostMapping("/api/admin/league/end-season")
+  public ResponseEntity<Season> endSeason(@AuthenticationPrincipal Jwt jwt) {
+    Season newSeason = leagueService.endSeason();
+    return ResponseEntity.ok(newSeason);
+  }
 
-    // Returns info about the currently running season
-    @GetMapping("/api/league/current-season")
-    public ResponseEntity<?> getCurrentSeason() {
-        Season season = leagueService.getCurrentSeason();
-        if (season == null) {
-            return ResponseEntity.ok("No active season.");
-        }
-        return ResponseEntity.ok(season);
+  // Returns info about the currently running season
+  @GetMapping("/api/league/current-season")
+  public ResponseEntity<?> getCurrentSeason() {
+    Season season = leagueService.getCurrentSeason();
+    if (season == null) {
+      return ResponseEntity.ok("No active season.");
     }
+    return ResponseEntity.ok(season);
+  }
 }

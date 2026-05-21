@@ -8,8 +8,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class UserStatsResponse {
-    private String userId;
-    private long totalCompleted;
-    private long completionFrequency;
-    private double averageAccuracy;
+  private String userId;
+  private long totalCompleted;
+  private long completionFrequency;
+  private double averageAccuracy;
 }

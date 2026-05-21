@@ -12,21 +12,21 @@ import lombok.Setter;
 @Setter
 public class Season {
 
-    @Id
-    private String id;
+  @Id
+  private String id;
 
-    private int seasonNumber;
+  private int seasonNumber;
 
-    private LocalDateTime startDate;
+  private LocalDateTime startDate;
 
-    // Null while season is still active
-    private LocalDateTime endDate;
+  // Null while season is still active
+  private LocalDateTime endDate;
 
-    private boolean active;
+  private boolean active;
 
-    public Season() {
-        this.id = UUID.randomUUID().toString();
-        this.startDate = LocalDateTime.now();
-        this.active = true;
-    }
+  public Season() {
+    this.id = UUID.randomUUID().toString();
+    this.startDate = LocalDateTime.now();
+    this.active = true;
+  }
 }

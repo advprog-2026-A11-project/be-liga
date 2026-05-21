@@ -4,7 +4,9 @@ import id.ac.ui.cs.advprog.liga.dto.ScoreUpdateRequest;
 import id.ac.ui.cs.advprog.liga.model.Season;
 
 public interface LeagueService {
-    void handleScoreUpdate(ScoreUpdateRequest request);
-    Season endSeason();
-    Season getCurrentSeason();
+  void handleScoreUpdate(ScoreUpdateRequest request);
+
+  Season endSeason();
+
+  Season getCurrentSeason();
 }

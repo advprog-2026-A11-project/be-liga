@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SeasonRepository extends JpaRepository<Season, String> {
 
-    // Finds the currently running season
-    Optional<Season> findByActiveTrue();
+  // Finds the currently running season
+  Optional<Season> findByActiveTrue();
 }
