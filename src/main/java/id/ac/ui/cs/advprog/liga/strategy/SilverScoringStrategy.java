@@ -1,16 +1,17 @@
 package id.ac.ui.cs.advprog.liga.strategy;
 
-import id.ac.ui.cs.advprog.liga.model.Clan;
+import id.ac.ui.cs.advprog.liga.model.ClanMember;
+
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class SilverScoringStrategy implements ScoringStrategy {
 
     @Override
-    public int computeScore(Clan clan) {
-        int raw = clan.getRawScore();
-        int memberCount = clan.getMembers().size();
-        // Small participation bonus: +5 per member
-        return raw + (memberCount * 5);
+    public int computeScore(List<ClanMember> members) {
+        int raw = members.stream().mapToInt(ClanMember::getSeasonScore).sum();
+        return raw + (members.size() * 5);
     }
 }
