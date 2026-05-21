@@ -49,8 +49,8 @@ public class ClanController {
     clan.setLeaderId(userId);
     Clan createdClan = service.create(clan);
 
-    // 4. Automatically add the leader as the first member with 0 score
-    service.addMember(createdClan.getClanId(), userId, 0);
+    // 4. Automatically add the leader as the first member
+    service.addMember(createdClan.getClanId(), userId);
 
     return ResponseEntity.ok(createdClan);
   }
