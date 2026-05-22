@@ -1,87 +1,428 @@
 package id.ac.ui.cs.advprog.liga.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
+import id.ac.ui.cs.advprog.liga.model.ClanMember;
 import id.ac.ui.cs.advprog.liga.service.ClanService;
-import java.util.Arrays;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 
-@WebMvcTest(ClanController.class)
+@ExtendWith(MockitoExtension.class)
 class ClanControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Mock
+  private ClanService service;
 
-  @MockBean
-  private ClanService clanService;
+  @InjectMocks
+  private ClanController controller;
+
+  private Clan clan;
+  private Jwt jwt;
+
+  private static final String CLAN_ID = "clan-001";
+  private static final String LEADER_ID = "leader-001";
+  private static final String USER_ID = "user-001";
+
+  @BeforeEach
+  void setUp() {
+    clan = new Clan();
+    clan.setClanId(CLAN_ID);
+    clan.setClanName("Test Clan");
+    clan.setLeaderId(LEADER_ID);
+
+    jwt = mock(Jwt.class);
+  }
+
+  // Helper to make JWT return yomu_user_id
+  private void mockJwtUser(String userId) {
+    when(jwt.getClaimAsString("yomu_user_id")).thenReturn(userId);
+  }
+
+  // Helper to make JWT fallback to subject (yomu_user_id is null)
+  private void mockJwtSubject(String userId) {
+    when(jwt.getClaimAsString("yomu_user_id")).thenReturn(null);
+    when(jwt.getSubject()).thenReturn(userId);
+  }
+
+  // ===================== listClans =====================
 
   @Test
-  void testListClansReturnsJsonArray() throws Exception {
-    Clan clan = new Clan();
-    clan.setClanName("Alpha Clan");
+  @SuppressWarnings("checkstyle:MethodName")
+  void testListClans_ReturnsAllClans() {
+    when(service.findAll()).thenReturn(List.of(clan));
+    List<Clan> result = controller.listClans();
+    assertEquals(1, result.size());
+  }
 
-    when(clanService.findAll()).thenReturn(Arrays.asList(clan));
+  // ===================== createClan =====================
 
-    mockMvc.perform(get("/api/clan/list"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$[0].clanName").value("Alpha Clan"));
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testCreateClan_Success() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
+    when(service.hasPendingApplication(USER_ID)).thenReturn(false);
+    when(service.create(clan)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.createClan(clan, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(clan, response.getBody());
+    verify(service).addMember(clan.getClanId(), USER_ID, 0);
   }
 
   @Test
-  void testCreateClanReturnsCreatedObject() throws Exception {
-    Clan clan = new Clan();
-    clan.setClanName("New Clan");
+  @SuppressWarnings("checkstyle:MethodName")
+  void testCreateClan_UserAlreadyInClan_ReturnsBadRequest() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(true);
 
-    when(clanService.create(any(Clan.class))).thenReturn(clan);
+    ResponseEntity<?> response = controller.createClan(clan, jwt);
 
-    String clanJson = "{\"clanName\":\"New Clan\"}";
-
-    mockMvc.perform(post("/api/clan/create")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(clanJson))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.clanName").value("New Clan"));
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertEquals("You are already in a clan.", response.getBody());
+    verify(service, never()).create(any());
   }
 
   @Test
-  void testGetClanDetail() throws Exception {
-    Clan clan = new Clan();
-    clan.setClanName("Detail Clan");
-    String id = clan.getClanId();
+  @SuppressWarnings("checkstyle:MethodName")
+  void testCreateClan_UserHasPendingApplication_ReturnsBadRequest() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
+    when(service.hasPendingApplication(USER_ID)).thenReturn(true);
 
-    when(clanService.findById(id)).thenReturn(clan);
+    ResponseEntity<?> response = controller.createClan(clan, jwt);
 
-    mockMvc.perform(get("/api/clan/detail/" + id))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.clanName").value("Detail Clan"));
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    verify(service, never()).create(any());
   }
 
   @Test
-  void testDeleteClan() throws Exception {
-    mockMvc.perform(delete("/api/clan/delete/some-id"))
-            .andExpect(status().isOk());
+  @SuppressWarnings("checkstyle:MethodName")
+  void testCreateClan_FallbackToSubjectWhenYomuUserIdBlank() {
+    when(jwt.getClaimAsString("yomu_user_id")).thenReturn("  "); // blank
+    when(jwt.getSubject()).thenReturn(LEADER_ID);
+    when(service.isUserInAnyClan(LEADER_ID)).thenReturn(false);
+    when(service.hasPendingApplication(LEADER_ID)).thenReturn(false);
+    when(service.create(clan)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.createClan(clan, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).addMember(clan.getClanId(), LEADER_ID, 0);
+  }
+
+  // ===================== detailClan =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testDetailClan_Found_ReturnsOk() {
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+    ResponseEntity<Clan> response = controller.detailClan(CLAN_ID);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(clan, response.getBody());
   }
 
   @Test
-  void testAddMember() throws Exception {
-    mockMvc.perform(post("/api/clan/some-id/add-member")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("100"))
-            .andExpect(status().isOk());
+  @SuppressWarnings("checkstyle:MethodName")
+  void testDetailClan_NotFound_Returns404() {
+    when(service.findById(CLAN_ID)).thenReturn(null);
+    ResponseEntity<Clan> response = controller.detailClan(CLAN_ID);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // ===================== editClan =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testEditClan_Success() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    Clan updatedClan = new Clan();
+    updatedClan.setClanId(CLAN_ID);
+    updatedClan.setClanName("New Name");
+
+    ResponseEntity<?> response = controller.editClan(updatedClan, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals("New Name", clan.getClanName());
+    verify(service).update(clan);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testEditClan_NotLeader_ReturnsForbidden() {
+    mockJwtUser(USER_ID); // not the leader
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    Clan updatedClan = new Clan();
+    updatedClan.setClanId(CLAN_ID);
+    updatedClan.setClanName("Hacked Name");
+
+    ResponseEntity<?> response = controller.editClan(updatedClan, jwt);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    verify(service, never()).update(any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testEditClan_ClanNotFound_Returns404() {
+    when(service.findById(any())).thenReturn(null);
+    Clan updatedClan = new Clan();
+    updatedClan.setClanId(CLAN_ID);
+
+    ResponseEntity<?> response = controller.editClan(updatedClan, jwt);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // ===================== deleteClan =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testDeleteClan_Success() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.deleteClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).delete(CLAN_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testDeleteClan_NotLeader_ReturnsForbidden() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.deleteClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    verify(service, never()).delete(any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testDeleteClan_NotFound_Returns404() {
+    when(service.findById(CLAN_ID)).thenReturn(null);
+    ResponseEntity<?> response = controller.deleteClan(CLAN_ID, jwt);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // ===================== applyToClan =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testApplyToClan_Success() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
+    when(service.hasPendingApplication(USER_ID)).thenReturn(false);
+
+    ResponseEntity<?> response = controller.applyToClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).applyToClan(CLAN_ID, USER_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testApplyToClan_AlreadyInClan_ReturnsBadRequest() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(true);
+
+    ResponseEntity<?> response = controller.applyToClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    verify(service, never()).applyToClan(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testApplyToClan_AlreadyHasPendingApplication_ReturnsBadRequest() {
+    mockJwtUser(USER_ID);
+    when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
+    when(service.hasPendingApplication(USER_ID)).thenReturn(true);
+
+    ResponseEntity<?> response = controller.applyToClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    verify(service, never()).applyToClan(any(), any());
+  }
+
+  // ===================== cancelApplication =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testCancelApplication_ReturnsOk() {
+    mockJwtUser(USER_ID);
+    ResponseEntity<?> response = controller.cancelApplication(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).cancelApplication(CLAN_ID, USER_ID);
+  }
+
+  // ===================== quitClan =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testQuitClan_Success_NonLeader() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan); // leader is LEADER_ID, not USER_ID
+
+    ResponseEntity<?> response = controller.quitClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).removeMemberByUserId(CLAN_ID, USER_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testQuitClan_Leader_ReturnsBadRequest() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.quitClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    verify(service, never()).removeMemberByUserId(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testQuitClan_ClanNotFound_StillCallsRemove() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(null);
+
+    ResponseEntity<?> response = controller.quitClan(CLAN_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).removeMemberByUserId(CLAN_ID, USER_ID);
+  }
+
+  // ===================== acceptApplicant =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testAcceptApplicant_Success() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.acceptApplicant(CLAN_ID, USER_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).acceptApplicant(CLAN_ID, USER_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testAcceptApplicant_NotLeader_ReturnsForbidden() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.acceptApplicant(CLAN_ID, "applicant-999", jwt);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    verify(service, never()).acceptApplicant(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testAcceptApplicant_ClanNotFound_Returns404() {
+    when(service.findById(CLAN_ID)).thenReturn(null);
+    ResponseEntity<?> response = controller.acceptApplicant(CLAN_ID, USER_ID, jwt);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // ===================== rejectApplicant =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testRejectApplicant_Success() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.rejectApplicant(CLAN_ID, USER_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).rejectApplicant(CLAN_ID, USER_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testRejectApplicant_NotLeader_ReturnsForbidden() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.rejectApplicant(CLAN_ID, "applicant-999", jwt);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    verify(service, never()).rejectApplicant(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testRejectApplicant_ClanNotFound_Returns404() {
+    when(service.findById(CLAN_ID)).thenReturn(null);
+    ResponseEntity<?> response = controller.rejectApplicant(CLAN_ID, USER_ID, jwt);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  }
+
+  // ===================== kickMember =====================
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testKickMember_Success() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.kickMember(CLAN_ID, USER_ID, jwt);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(service).removeMemberByUserId(CLAN_ID, USER_ID);
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testKickMember_NotLeader_ReturnsForbidden() {
+    mockJwtUser(USER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    ResponseEntity<?> response = controller.kickMember(CLAN_ID, "victim-user", jwt);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    verify(service, never()).removeMemberByUserId(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testKickMember_KickSelf_ReturnsBadRequest() {
+    mockJwtUser(LEADER_ID);
+    when(service.findById(CLAN_ID)).thenReturn(clan);
+
+    // Leader tries to kick themselves
+    ResponseEntity<?> response = controller.kickMember(CLAN_ID, LEADER_ID, jwt);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    verify(service, never()).removeMemberByUserId(any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("checkstyle:MethodName")
+  void testKickMember_ClanNotFound_Returns404() {
+    when(service.findById(CLAN_ID)).thenReturn(null);
+    ResponseEntity<?> response = controller.kickMember(CLAN_ID, USER_ID, jwt);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 }
