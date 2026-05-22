@@ -44,7 +44,10 @@ public class ClanController {
     // 2. Check if user has a pending application
     if (service.hasPendingApplication(userId)) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body("You cannot create a clan while you have a pending application. Please cancel it first.");
+        .body("""
+          You cannot create a clan while you have a pending application. \
+          Please cancel it first.\
+          """);
     }
 
     // 3. Set the creator as the leader
@@ -64,13 +67,17 @@ public class ClanController {
   }
 
   @PutMapping("/edit")
-  public ResponseEntity<?> editClan(@RequestBody Clan updatedClan, @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<?> editClan(
+    @RequestBody Clan updatedClan, 
+    @AuthenticationPrincipal Jwt jwt
+  ) {
     Clan existingClan = service.findById(updatedClan.getClanId());
 
     if (existingClan != null) {
       // FIX: Use our new helper method for the Security Check
       if (!existingClan.getLeaderId().equals(getUserIdFromToken(jwt))) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can edit this clan.");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+          "Only the clan leader can edit this clan.");
       }
 
       existingClan.setClanName(updatedClan.getClanName());
@@ -89,7 +96,9 @@ public class ClanController {
 
     // FIX: Use our new helper method for the Security Check
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can delete this clan.");
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        "Only the clan leader can delete this clan."
+      );
     }
 
     service.delete(id);
@@ -104,10 +113,14 @@ public class ClanController {
     String userId = getUserIdFromToken(jwt);
 
     if (service.isUserInAnyClan(userId)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You are already in a clan.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+        "You are already in a clan."
+      );
     }
     if (service.hasPendingApplication(userId)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("You already have a pending application to a clan.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+        "You already have a pending application to a clan."
+      );
     }
 
     service.applyToClan(id, userId);
@@ -129,7 +142,9 @@ public class ClanController {
     Clan clan = service.findById(id);
 
     if (clan != null && clan.getLeaderId().equals(userId)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Clan leaders cannot quit. You must delete the clan.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+        "Clan leaders cannot quit. You must delete the clan."
+      );
     }
 
     service.removeMemberByUserId(id, userId);
@@ -139,15 +154,20 @@ public class ClanController {
   // --- Leader Actions ---
 
   @PostMapping("/{id}/accept/{applicantId}")
-  public ResponseEntity<?> acceptApplicant(@PathVariable String id, @PathVariable String applicantId,
-      @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<?> acceptApplicant(
+    @PathVariable String id, 
+    @PathVariable String applicantId,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
     Clan clan = service.findById(id);
     if (clan == null) {
       return ResponseEntity.notFound().build();
     }
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can accept applicants.");
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        "Only the clan leader can accept applicants."
+      );
     }
 
     service.acceptApplicant(id, applicantId);
@@ -155,8 +175,11 @@ public class ClanController {
   }
 
   @PostMapping("/{id}/reject/{applicantId}")
-  public ResponseEntity<?> rejectApplicant(@PathVariable String id, @PathVariable String applicantId,
-      @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<?> rejectApplicant(
+    @PathVariable String id, 
+    @PathVariable String applicantId,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
     Clan clan = service.findById(id);
     if (clan == null) {
       return ResponseEntity.notFound().build();
@@ -164,7 +187,9 @@ public class ClanController {
 
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can reject applicants.");
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        "Only the clan leader can reject applicants."
+      );
     }
 
     service.rejectApplicant(id, applicantId);
@@ -181,7 +206,9 @@ public class ClanController {
 
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can kick members.");
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        "Only the clan leader can kick members."
+      );
     }
 
     if (clan.getLeaderId().equals(memberId)) {
