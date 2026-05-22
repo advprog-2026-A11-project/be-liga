@@ -37,10 +37,10 @@ public class LeagueController {
   // Returns info about the currently running season
   @GetMapping("/api/clan/league/current-season")
   public ResponseEntity<?> getCurrentSeason() {
-      Season season = leagueService.getCurrentSeason();
-      if (season == null) {
-          return ResponseEntity.ok(Map.of("active", false, "message", "No active season."));
-      }
-      return ResponseEntity.ok(season);
+    Season season = leagueService.getCurrentSeason();
+    if (season == null) {
+      return ResponseEntity.ok(Map.of("active", false, "message", "No active season."));
+    }
+    return ResponseEntity.ok(season);
   }
 }
