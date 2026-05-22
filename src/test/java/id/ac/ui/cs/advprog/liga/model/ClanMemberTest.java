@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 class ClanMemberTest {
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testNoArgsConstructor() {
     ClanMember member = new ClanMember();
     assertNotNull(member);
@@ -15,6 +16,7 @@ class ClanMemberTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAllArgsConstructor() {
     ClanMember member = new ClanMember("user-123", 750);
     assertEquals("user-123", member.getUserId());
@@ -22,6 +24,7 @@ class ClanMemberTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testSetScore() {
     ClanMember member = new ClanMember("user-123", 0);
     member.setScore(500);
@@ -29,6 +32,7 @@ class ClanMemberTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEquality_SameUserIdAndScore() {
     ClanMember m1 = new ClanMember("user-1", 100);
     ClanMember m2 = new ClanMember("user-1", 100);
@@ -36,6 +40,7 @@ class ClanMemberTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEquality_DifferentScore() {
     ClanMember m1 = new ClanMember("user-1", 100);
     ClanMember m2 = new ClanMember("user-1", 200);

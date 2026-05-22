@@ -42,6 +42,7 @@ class ClanServiceImplTest {
   // --- CRUD ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCreate_SavesAndReturnsClan() {
     when(clanRepository.save(clan)).thenReturn(clan);
     Clan result = clanService.create(clan);
@@ -50,6 +51,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testFindAll_ReturnsSortedByScoreDescending() {
     Clan clan1 = new Clan();
     clan1.getMembers().add(new ClanMember("u1", 100));
@@ -69,6 +71,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testFindById_ExistingId_ReturnsClan() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
     Clan result = clanService.findById(CLAN_ID);
@@ -76,18 +79,21 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testFindById_NonExistingId_ReturnsNull() {
     when(clanRepository.findById("unknown")).thenReturn(Optional.empty());
     assertNull(clanService.findById("unknown"));
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testUpdate_CallsSave() {
     clanService.update(clan);
     verify(clanRepository, times(1)).save(clan);
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDelete_CallsDeleteById() {
     clanService.delete(CLAN_ID);
     verify(clanRepository, times(1)).deleteById(CLAN_ID);
@@ -96,6 +102,7 @@ class ClanServiceImplTest {
   // --- addMember ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAddMember_ClanExists_UserNotAlreadyMember_AddsMember() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
     clanService.addMember(CLAN_ID, USER_ID, 100);
@@ -107,6 +114,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAddMember_UserAlreadyMember_DoesNotAddDuplicate() {
     clan.getMembers().add(new ClanMember(USER_ID, 50));
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -118,6 +126,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAddMember_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.addMember(CLAN_ID, USER_ID, 100);
@@ -127,6 +136,7 @@ class ClanServiceImplTest {
   // --- removeMemberByUserId ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRemoveMemberByUserId_RemovesMember() {
     clan.getMembers().add(new ClanMember(USER_ID, 100));
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -138,6 +148,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRemoveMemberByUserId_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.removeMemberByUserId(CLAN_ID, USER_ID);
@@ -147,6 +158,7 @@ class ClanServiceImplTest {
   // --- editMemberScore ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditMemberScore_UpdatesScore() {
     clan.getMembers().add(new ClanMember(USER_ID, 100));
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -158,6 +170,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditMemberScore_UserNotInClan_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
     clanService.editMemberScore(CLAN_ID, USER_ID, 999);
@@ -165,6 +178,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditMemberScore_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.editMemberScore(CLAN_ID, USER_ID, 999);
@@ -174,6 +188,7 @@ class ClanServiceImplTest {
   // --- isUserInAnyClan ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testIsUserInAnyClan_UserIsMember_ReturnsTrue() {
     clan.getMembers().add(new ClanMember(USER_ID, 100));
     when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
@@ -182,6 +197,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testIsUserInAnyClan_UserIsNotMember_ReturnsFalse() {
     when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
     assertFalse(clanService.isUserInAnyClan(USER_ID));
@@ -190,6 +206,7 @@ class ClanServiceImplTest {
   // --- hasPendingApplication ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testHasPendingApplication_UserHasApplied_ReturnsTrue() {
     clan.getApplicantIds().add(USER_ID);
     when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
@@ -198,6 +215,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testHasPendingApplication_UserHasNotApplied_ReturnsFalse() {
     when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
     assertFalse(clanService.hasPendingApplication(USER_ID));
@@ -206,6 +224,7 @@ class ClanServiceImplTest {
   // --- applyToClan ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_AddsUserToApplicants() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
     clanService.applyToClan(CLAN_ID, USER_ID);
@@ -215,6 +234,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_UserAlreadyApplied_DoesNotAddDuplicate() {
     clan.getApplicantIds().add(USER_ID);
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -226,6 +246,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.applyToClan(CLAN_ID, USER_ID);
@@ -235,6 +256,7 @@ class ClanServiceImplTest {
   // --- acceptApplicant ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_MovesUserFromApplicantsToMembers() {
     clan.getApplicantIds().add(USER_ID);
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -250,6 +272,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_UserNotInApplicants_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
     clanService.acceptApplicant(CLAN_ID, USER_ID);
@@ -258,6 +281,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.acceptApplicant(CLAN_ID, USER_ID);
@@ -267,6 +291,7 @@ class ClanServiceImplTest {
   // --- rejectApplicant ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRejectApplicant_RemovesUserFromApplicants() {
     clan.getApplicantIds().add(USER_ID);
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
@@ -278,6 +303,7 @@ class ClanServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRejectApplicant_ClanNotFound_DoesNothing() {
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
     clanService.rejectApplicant(CLAN_ID, USER_ID);
@@ -287,6 +313,7 @@ class ClanServiceImplTest {
   // --- cancelApplication ---
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCancelApplication_DelegatesToRejectApplicant() {
     clan.getApplicantIds().add(USER_ID);
     when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
