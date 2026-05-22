@@ -23,11 +23,11 @@ public class LeagueServiceImpl implements LeagueService {
   private static final int PROMOTION_SLOTS = 2;
   private static final int DEGRADATION_SLOTS = 2;
   private static final List<String> TIER_ORDER = List.of(
-    "Bronze", 
-    "Silver",
-    "Gold", 
-    "Platinum", 
-    "Diamond"
+      "Bronze", 
+      "Silver",
+      "Gold", 
+      "Platinum", 
+      "Diamond"
   );
 
   private final ClanRepository clanRepository;
