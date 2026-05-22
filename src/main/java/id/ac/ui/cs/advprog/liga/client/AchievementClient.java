@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.liga.client;
 
 import id.ac.ui.cs.advprog.liga.dto.MissionScoreResponse;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -40,16 +41,22 @@ public class AchievementClient {
 
   // Notifies be-achievement that a clan has promoted to Diamond
   // Your teammate needs to create this endpoint on their side
-  public void notifyClanPromoted(String clanId, String tier) {
+  public void notifyClanPromoted(
+      String clanId, 
+      String tier, 
+      List<String> memberUserIds
+  ) {
     try {
       webClient.post()
           .uri("/api/events/clan-promoted")
-          .bodyValue(Map.of("clanId", clanId, "tier", tier))
+          .bodyValue(Map.of(
+              "clanId", clanId,
+              "tier", tier,
+              "userIds", memberUserIds))
           .retrieve()
           .bodyToMono(Void.class)
           .block();
     } catch (Exception e) {
-      // Log and continue — don't let achievement failures break league logic
       System.err.println("Failed to notify achievement service of clan promotion: "
           + e.getMessage());
     }
