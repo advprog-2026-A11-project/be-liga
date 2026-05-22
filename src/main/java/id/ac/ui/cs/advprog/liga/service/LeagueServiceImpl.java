@@ -157,7 +157,8 @@ public class LeagueServiceImpl implements LeagueService {
         .filter(m -> achievementClient.getMissionScore(m.getUserId()) > 0)
         .count();
 
-    if (!members.isEmpty() &&
+    if (!members.isEmpty() 
+        &&
         (double) membersWithMission / members.size() >= 0.5) {
       multiplier *= 1.2;
     }
