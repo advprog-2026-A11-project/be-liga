@@ -1,12 +1,16 @@
 package id.ac.ui.cs.advprog.liga.service;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
+import id.ac.ui.cs.advprog.liga.model.ClanMember;
+
 import java.util.List;
 
 public interface ClanService {
   Clan create(Clan clan);
 
   List<Clan> findAll();
+
+  List<ClanMember> getMembersByClanId(String clanId);
 
   Clan findById(String id);
 

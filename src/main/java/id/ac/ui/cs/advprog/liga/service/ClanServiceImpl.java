@@ -34,6 +34,11 @@ public class ClanServiceImpl implements ClanService {
   }
 
   @Override
+  public List<ClanMember> getMembersByClanId(String clanId) {
+    return clanMemberRepository.findByClanId(clanId);
+  }
+
+  @Override
   public Clan findById(String id) {
     return clanRepository.findById(id).orElse(null);
   }

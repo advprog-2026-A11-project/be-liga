@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.liga.controller;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
+import id.ac.ui.cs.advprog.liga.model.ClanMember;
 import id.ac.ui.cs.advprog.liga.service.ClanService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,13 @@ public class ClanController {
   @GetMapping("/list")
   public List<Clan> listClans() {
     return service.findAll();
+  }
+
+  @GetMapping("/{id}/members")
+  public ResponseEntity<List<ClanMember>> getClanMembers(
+      @PathVariable String id
+  ) {
+    return ResponseEntity.ok(service.getMembersByClanId(id));
   }
 
   @PostMapping("/create")
