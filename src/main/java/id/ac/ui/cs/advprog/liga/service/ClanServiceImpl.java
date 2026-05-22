@@ -69,9 +69,6 @@ public class ClanServiceImpl implements ClanService {
     }
 
     member.setClanId(clanId);
-    // Season scores reset on join — only carry over lifetime accuracy
-    member.setQuizScore(0);
-    member.setMissionScore(0);
     clanMemberRepository.save(member);
   }
 
