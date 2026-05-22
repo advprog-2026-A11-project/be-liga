@@ -61,7 +61,7 @@ public class LeagueServiceImpl implements LeagueService {
         });
 
     // Update quiz or mission score
-    if (request.isAQuiz()) {
+    if (request.isQuiz()) {
       member.setQuizScore(member.getQuizScore() + request.getScore());
       member.setTotalQuizzes(member.getTotalQuizzes() + 1);
       member.setTotalAccuracy(member.getTotalAccuracy() + request.getAccuracy());

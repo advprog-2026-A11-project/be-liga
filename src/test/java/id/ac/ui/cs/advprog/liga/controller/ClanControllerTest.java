@@ -29,9 +29,9 @@ class ClanControllerTest {
   private Clan clan;
   private Jwt jwt;
 
-  private final String CLAN_ID = "clan-001";
-  private final String LEADER_ID = "leader-001";
-  private final String USER_ID = "user-001";
+  private static final String CLAN_ID = "clan-001";
+  private static final String LEADER_ID = "leader-001";
+  private static final String USER_ID = "user-001";
 
   @BeforeEach
   void setUp() {

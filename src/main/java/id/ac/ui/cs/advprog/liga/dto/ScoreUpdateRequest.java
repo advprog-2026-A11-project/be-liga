@@ -12,6 +12,6 @@ import lombok.Setter;
 public class ScoreUpdateRequest {
   private String userId;
   private int score;
-  private boolean isAQuiz; // true = quiz completion, false = mission completion
+  private boolean isQuiz; // true = quiz completion, false = mission completion
   private double accuracy; // only meaningful when isAQuiz = true, otherwise ignored
 }
