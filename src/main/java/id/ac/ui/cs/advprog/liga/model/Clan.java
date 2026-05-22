@@ -1,9 +1,9 @@
 package id.ac.ui.cs.advprog.liga.model;
 
 import jakarta.persistence.*;
-import java.util.UUID;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 

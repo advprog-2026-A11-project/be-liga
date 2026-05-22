@@ -1,9 +1,8 @@
 package id.ac.ui.cs.advprog.liga.strategy;
 
 import id.ac.ui.cs.advprog.liga.model.ClanMember;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DiamondScoringStrategy implements ScoringStrategy {

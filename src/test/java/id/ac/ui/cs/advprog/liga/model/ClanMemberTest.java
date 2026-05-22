@@ -1,8 +1,8 @@
 package id.ac.ui.cs.advprog.liga.model;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
 
 class ClanMemberTest {
 
