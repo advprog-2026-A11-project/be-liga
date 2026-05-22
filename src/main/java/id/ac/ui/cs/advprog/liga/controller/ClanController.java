@@ -44,10 +44,8 @@ public class ClanController {
     // 2. Check if user has a pending application
     if (service.hasPendingApplication(userId)) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body("""
-          You cannot create a clan while you have a pending application. \
-          Please cancel it first.\
-          """);
+        .body("You cannot create a clan while you have a pending application. "
+          + "Please cancel it first.");
     }
 
     // 3. Set the creator as the leader
