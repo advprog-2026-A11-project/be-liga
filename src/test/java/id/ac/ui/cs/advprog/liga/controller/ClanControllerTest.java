@@ -57,6 +57,7 @@ class ClanControllerTest {
   // ===================== listClans =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testListClans_ReturnsAllClans() {
     when(service.findAll()).thenReturn(List.of(clan));
     List<Clan> result = controller.listClans();
@@ -66,6 +67,7 @@ class ClanControllerTest {
   // ===================== createClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCreateClan_Success() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
@@ -80,6 +82,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCreateClan_UserAlreadyInClan_ReturnsBadRequest() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(true);
@@ -92,6 +95,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCreateClan_UserHasPendingApplication_ReturnsBadRequest() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
@@ -104,6 +108,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCreateClan_FallbackToSubjectWhenYomuUserIdBlank() {
     when(jwt.getClaimAsString("yomu_user_id")).thenReturn("  "); // blank
     when(jwt.getSubject()).thenReturn(LEADER_ID);
@@ -120,6 +125,7 @@ class ClanControllerTest {
   // ===================== detailClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDetailClan_Found_ReturnsOk() {
     when(service.findById(CLAN_ID)).thenReturn(clan);
     ResponseEntity<Clan> response = controller.detailClan(CLAN_ID);
@@ -128,6 +134,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDetailClan_NotFound_Returns404() {
     when(service.findById(CLAN_ID)).thenReturn(null);
     ResponseEntity<Clan> response = controller.detailClan(CLAN_ID);
@@ -137,6 +144,7 @@ class ClanControllerTest {
   // ===================== editClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditClan_Success() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -153,6 +161,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditClan_NotLeader_ReturnsForbidden() {
     mockJwtUser(USER_ID); // not the leader
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -168,6 +177,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testEditClan_ClanNotFound_Returns404() {
     when(service.findById(any())).thenReturn(null);
     Clan updatedClan = new Clan();
@@ -180,6 +190,7 @@ class ClanControllerTest {
   // ===================== deleteClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDeleteClan_Success() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -191,6 +202,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDeleteClan_NotLeader_ReturnsForbidden() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -202,6 +214,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testDeleteClan_NotFound_Returns404() {
     when(service.findById(CLAN_ID)).thenReturn(null);
     ResponseEntity<?> response = controller.deleteClan(CLAN_ID, jwt);
@@ -211,6 +224,7 @@ class ClanControllerTest {
   // ===================== applyToClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_Success() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
@@ -223,6 +237,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_AlreadyInClan_ReturnsBadRequest() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(true);
@@ -234,6 +249,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testApplyToClan_AlreadyHasPendingApplication_ReturnsBadRequest() {
     mockJwtUser(USER_ID);
     when(service.isUserInAnyClan(USER_ID)).thenReturn(false);
@@ -248,6 +264,7 @@ class ClanControllerTest {
   // ===================== cancelApplication =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testCancelApplication_ReturnsOk() {
     mockJwtUser(USER_ID);
     ResponseEntity<?> response = controller.cancelApplication(CLAN_ID, jwt);
@@ -259,6 +276,7 @@ class ClanControllerTest {
   // ===================== quitClan =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testQuitClan_Success_NonLeader() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan); // leader is LEADER_ID, not USER_ID
@@ -270,6 +288,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testQuitClan_Leader_ReturnsBadRequest() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -281,6 +300,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testQuitClan_ClanNotFound_StillCallsRemove() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(null);
@@ -294,6 +314,7 @@ class ClanControllerTest {
   // ===================== acceptApplicant =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_Success() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -305,6 +326,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_NotLeader_ReturnsForbidden() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -316,6 +338,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testAcceptApplicant_ClanNotFound_Returns404() {
     when(service.findById(CLAN_ID)).thenReturn(null);
     ResponseEntity<?> response = controller.acceptApplicant(CLAN_ID, USER_ID, jwt);
@@ -325,6 +348,7 @@ class ClanControllerTest {
   // ===================== rejectApplicant =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRejectApplicant_Success() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -336,6 +360,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRejectApplicant_NotLeader_ReturnsForbidden() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -347,6 +372,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testRejectApplicant_ClanNotFound_Returns404() {
     when(service.findById(CLAN_ID)).thenReturn(null);
     ResponseEntity<?> response = controller.rejectApplicant(CLAN_ID, USER_ID, jwt);
@@ -356,6 +382,7 @@ class ClanControllerTest {
   // ===================== kickMember =====================
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testKickMember_Success() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -367,6 +394,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testKickMember_NotLeader_ReturnsForbidden() {
     mockJwtUser(USER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -378,6 +406,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testKickMember_KickSelf_ReturnsBadRequest() {
     mockJwtUser(LEADER_ID);
     when(service.findById(CLAN_ID)).thenReturn(clan);
@@ -390,6 +419,7 @@ class ClanControllerTest {
   }
 
   @Test
+  @SuppressWarnings("checkstyle:MethodName")
   void testKickMember_ClanNotFound_Returns404() {
     when(service.findById(CLAN_ID)).thenReturn(null);
     ResponseEntity<?> response = controller.kickMember(CLAN_ID, USER_ID, jwt);
