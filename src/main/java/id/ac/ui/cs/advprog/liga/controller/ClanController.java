@@ -83,8 +83,9 @@ public class ClanController {
   @DeleteMapping("/delete/{id}")
   public ResponseEntity<?> deleteClan(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
     Clan clan = service.findById(id);
-    if (clan == null)
+    if (clan == null) {
       return ResponseEntity.notFound().build();
+    }
 
     // FIX: Use our new helper method for the Security Check
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
@@ -141,9 +142,9 @@ public class ClanController {
   public ResponseEntity<?> acceptApplicant(@PathVariable String id, @PathVariable String applicantId,
       @AuthenticationPrincipal Jwt jwt) {
     Clan clan = service.findById(id);
-    if (clan == null)
+    if (clan == null) {
       return ResponseEntity.notFound().build();
-
+    }
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the clan leader can accept applicants.");
@@ -157,8 +158,9 @@ public class ClanController {
   public ResponseEntity<?> rejectApplicant(@PathVariable String id, @PathVariable String applicantId,
       @AuthenticationPrincipal Jwt jwt) {
     Clan clan = service.findById(id);
-    if (clan == null)
+    if (clan == null) {
       return ResponseEntity.notFound().build();
+    }
 
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {
@@ -173,8 +175,9 @@ public class ClanController {
   public ResponseEntity<?> kickMember(@PathVariable String id, @PathVariable String memberId,
       @AuthenticationPrincipal Jwt jwt) {
     Clan clan = service.findById(id);
-    if (clan == null)
+    if (clan == null) {
       return ResponseEntity.notFound().build();
+    }
 
     // FIX: Use our new helper method
     if (!clan.getLeaderId().equals(getUserIdFromToken(jwt))) {

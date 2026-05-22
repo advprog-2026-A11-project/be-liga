@@ -28,8 +28,9 @@ public class AchievementClient {
       if (response != null && response.containsKey("data")) {
         Map data = (Map) response.get("data");
         Object score = data.get("score");
-        if (score instanceof Integer)
+        if (score instanceof Integer) {
           return (Integer) score;
+        }
       }
       return 0;
     } catch (Exception e) {

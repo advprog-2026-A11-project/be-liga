@@ -39,8 +39,9 @@ public class ClanMember {
   // Returns lifetime average accuracy (0.0 to 1.0)
   // Returns 0.0 if the student has never completed a quiz
   public double getAccuracy() {
-    if (totalQuizzes == 0)
+    if (totalQuizzes == 0) {
       return 0.0;
+    }
     return totalAccuracy / totalQuizzes;
   }
 

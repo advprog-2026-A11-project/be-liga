@@ -9,8 +9,9 @@ public class GoldScoringStrategy implements ScoringStrategy {
 
   @Override
   public int computeScore(List<ClanMember> members) {
-    if (members.isEmpty())
+    if (members.isEmpty()) {
       return 0;
+    }
     return members.stream().mapToInt(ClanMember::getSeasonScore).sum() / members.size();
   }
 }

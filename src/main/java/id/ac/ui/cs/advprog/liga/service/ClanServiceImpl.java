@@ -57,15 +57,16 @@ public class ClanServiceImpl implements ClanService {
   @Override
   public void addMember(String clanId, String userId) {
     Clan clan = findById(clanId);
-    if (clan == null)
+    if (clan == null) {
       return;
-
+    }
     // Get or create the student's registry entry
     ClanMember member = clanMemberRepository.findByUserId(userId)
         .orElseGet(() -> new ClanMember(userId));
 
-    if (member.getClanId() != null)
+    if (member.getClanId() != null) {
       return; // already in a clan
+    }
 
     member.setClanId(clanId);
     // Season scores reset on join — only carry over lifetime accuracy
@@ -96,8 +97,10 @@ public class ClanServiceImpl implements ClanService {
   @Override
   public void acceptApplicant(String clanId, String applicantId) {
     Clan clan = findById(clanId);
-    if (clan == null || !clan.getApplicantIds().contains(applicantId))
+    if (clan == null || !clan.getApplicantIds().contains(applicantId)) {
       return;
+    }
+    
     clan.getApplicantIds().remove(applicantId);
     clanRepository.save(clan);
     addMember(clanId, applicantId);
