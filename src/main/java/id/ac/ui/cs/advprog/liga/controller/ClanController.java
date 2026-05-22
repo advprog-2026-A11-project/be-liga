@@ -68,8 +68,8 @@ public class ClanController {
 
   @PutMapping("/edit")
   public ResponseEntity<?> editClan(
-    @RequestBody Clan updatedClan, 
-    @AuthenticationPrincipal Jwt jwt
+      @RequestBody Clan updatedClan, 
+      @AuthenticationPrincipal Jwt jwt
   ) {
     Clan existingClan = service.findById(updatedClan.getClanId());
 
@@ -128,7 +128,10 @@ public class ClanController {
   }
 
   @DeleteMapping("/{id}/cancel-application")
-  public ResponseEntity<?> cancelApplication(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<?> cancelApplication(
+      @PathVariable String id, 
+      @AuthenticationPrincipal Jwt jwt
+  ) {
     // FIX: Use our new helper method
     String userId = getUserIdFromToken(jwt);
     service.cancelApplication(id, userId);
@@ -155,9 +158,9 @@ public class ClanController {
 
   @PostMapping("/{id}/accept/{applicantId}")
   public ResponseEntity<?> acceptApplicant(
-    @PathVariable String id, 
-    @PathVariable String applicantId,
-    @AuthenticationPrincipal Jwt jwt
+      @PathVariable String id, 
+      @PathVariable String applicantId,
+      @AuthenticationPrincipal Jwt jwt
   ) {
     Clan clan = service.findById(id);
     if (clan == null) {
@@ -176,9 +179,9 @@ public class ClanController {
 
   @PostMapping("/{id}/reject/{applicantId}")
   public ResponseEntity<?> rejectApplicant(
-    @PathVariable String id, 
-    @PathVariable String applicantId,
-    @AuthenticationPrincipal Jwt jwt
+      @PathVariable String id, 
+      @PathVariable String applicantId,
+      @AuthenticationPrincipal Jwt jwt
   ) {
     Clan clan = service.findById(id);
     if (clan == null) {
