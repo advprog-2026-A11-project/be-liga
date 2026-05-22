@@ -106,9 +106,9 @@ public class LeagueServiceImpl implements LeagueService {
           clan.setTier(nextTier);
           if (nextTier.equals("Diamond")) {
             List<String> memberIds = clanMemberRepository.findByClanId(clan.getClanId())
-              .stream()
-              .map(ClanMember::getUserId)
-              .toList();
+                .stream()
+                .map(ClanMember::getUserId)
+                .toList();
             achievementClient.notifyClanPromoted(clan.getClanId(), nextTier, memberIds);
           }
         }
