@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.liga.model.Clan;
 import id.ac.ui.cs.advprog.liga.model.ClanMember;
 import id.ac.ui.cs.advprog.liga.service.ClanService;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,15 @@ public class ClanController {
       @PathVariable String id
   ) {
     return ResponseEntity.ok(service.getMembersByClanId(id));
+  }
+
+  @GetMapping("/membership-status")
+  public ResponseEntity<Map<String, Object>> getMembershipStatus(
+      @AuthenticationPrincipal Jwt jwt) {
+    String userId = getUserIdFromToken(jwt);
+    boolean inClan = service.isUserInAnyClan(userId);
+    boolean applying = service.hasPendingApplication(userId);
+    return ResponseEntity.ok(Map.of("inClan", inClan, "applying", applying));
   }
 
   @PostMapping("/create")

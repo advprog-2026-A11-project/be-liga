@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.liga.controller;
 import id.ac.ui.cs.advprog.liga.dto.ScoreUpdateRequest;
 import id.ac.ui.cs.advprog.liga.model.Season;
 import id.ac.ui.cs.advprog.liga.service.LeagueService;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,10 +37,10 @@ public class LeagueController {
   // Returns info about the currently running season
   @GetMapping("/api/clan/league/current-season")
   public ResponseEntity<?> getCurrentSeason() {
-    Season season = leagueService.getCurrentSeason();
-    if (season == null) {
-      return ResponseEntity.ok("No active season.");
-    }
-    return ResponseEntity.ok(season);
+      Season season = leagueService.getCurrentSeason();
+      if (season == null) {
+          return ResponseEntity.ok(Map.of("active", false, "message", "No active season."));
+      }
+      return ResponseEntity.ok(season);
   }
 }
