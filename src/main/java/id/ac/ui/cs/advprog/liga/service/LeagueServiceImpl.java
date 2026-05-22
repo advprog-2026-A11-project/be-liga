@@ -13,6 +13,9 @@ import id.ac.ui.cs.advprog.liga.strategy.ScoringStrategyFactory;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +26,11 @@ public class LeagueServiceImpl implements LeagueService {
   private static final int PROMOTION_SLOTS = 2;
   private static final int DEGRADATION_SLOTS = 2;
   private static final List<String> TIER_ORDER = List.of(
-      "Bronze", 
+      "Bronze",
       "Silver",
-      "Gold", 
-      "Platinum", 
-      "Diamond"
-  );
+      "Gold",
+      "Platinum",
+      "Diamond");
 
   private final ClanRepository clanRepository;
   private final ClanMemberRepository clanMemberRepository;
@@ -90,36 +92,47 @@ public class LeagueServiceImpl implements LeagueService {
     // Process promotions and degradations
     List<Clan> allClans = clanRepository.findAll();
 
-    for (String tier : TIER_ORDER) {
+    // Snapshot original tiers BEFORE any changes
+    Map<String, String> originalTiers = allClans.stream()
+        .collect(Collectors.toMap(Clan::getClanId, Clan::getTier));
+
+    // Pass 1: Promotions only
+    for (int tierIndex = TIER_ORDER.size() - 2; tierIndex >= 0; tierIndex--) {
+      String tier = TIER_ORDER.get(tierIndex);
+      String nextTier = TIER_ORDER.get(tierIndex + 1);
+
       List<Clan> clansInTier = allClans.stream()
-          .filter(c -> c.getTier().equals(tier))
+          .filter(c -> originalTiers.get(c.getClanId()).equals(tier))
           .sorted(Comparator.comparingInt(Clan::getSeasonScore).reversed())
           .toList();
 
-      int tierIndex = TIER_ORDER.indexOf(tier);
-
-      if (tierIndex < TIER_ORDER.size() - 1) {
-        String nextTier = TIER_ORDER.get(tierIndex + 1);
-        int promotionCount = Math.min(PROMOTION_SLOTS, clansInTier.size());
-        for (int i = 0; i < promotionCount; i++) {
-          Clan clan = clansInTier.get(i);
-          clan.setTier(nextTier);
-          if (nextTier.equals("Diamond")) {
-            List<String> memberIds = clanMemberRepository.findByClanId(clan.getClanId())
-                .stream()
-                .map(ClanMember::getUserId)
-                .toList();
-            achievementClient.notifyClanPromoted(clan.getClanId(), nextTier, memberIds);
-          }
+      int promotionCount = Math.min(PROMOTION_SLOTS, clansInTier.size());
+      for (int i = 0; i < promotionCount; i++) {
+        Clan clan = clansInTier.get(i);
+        clan.setTier(nextTier);
+        if (nextTier.equals("Diamond")) {
+          List<String> memberIds = clanMemberRepository.findByClanId(clan.getClanId())
+              .stream()
+              .map(ClanMember::getUserId)
+              .toList();
+          achievementClient.notifyClanPromoted(clan.getClanId(), nextTier, memberIds);
         }
       }
+    }
 
-      if (tierIndex > 0) {
-        String previousTier = TIER_ORDER.get(tierIndex - 1);
-        int degradationCount = Math.min(DEGRADATION_SLOTS, clansInTier.size());
-        for (int i = clansInTier.size() - 1; i >= clansInTier.size() - degradationCount; i--) {
-          clansInTier.get(i).setTier(previousTier);
-        }
+    // Pass 2: Degradations only — also uses originalTiers snapshot
+    for (int tierIndex = 1; tierIndex < TIER_ORDER.size(); tierIndex++) {
+      String tier = TIER_ORDER.get(tierIndex);
+      String previousTier = TIER_ORDER.get(tierIndex - 1);
+
+      List<Clan> clansInTier = allClans.stream()
+          .filter(c -> originalTiers.get(c.getClanId()).equals(tier))
+          .sorted(Comparator.comparingInt(Clan::getSeasonScore).reversed())
+          .toList();
+
+      int degradationCount = Math.min(DEGRADATION_SLOTS, clansInTier.size());
+      for (int i = clansInTier.size() - 1; i >= clansInTier.size() - degradationCount; i--) {
+        clansInTier.get(i).setTier(previousTier);
       }
     }
 
@@ -161,7 +174,7 @@ public class LeagueServiceImpl implements LeagueService {
         .filter(m -> achievementClient.getMissionScore(m.getUserId()) > 0)
         .count();
 
-    if (!members.isEmpty() 
+    if (!members.isEmpty()
         &&
         (double) membersWithMission / members.size() >= 0.5) {
       multiplier *= 1.2;
