@@ -150,9 +150,6 @@ public class LeagueServiceImpl implements LeagueService {
   private void recalculateClanScore(Clan clan) {
     List<ClanMember> members = clanMemberRepository.findByClanId(clan.getClanId());
 
-    ScoringStrategy strategy = scoringStrategyFactory.getStrategy(clan.getTier());
-    int baseScore = strategy.computeScore(members);
-
     double multiplier = 1.0;
 
     // Productivity Buff: >= 50% of members completed a daily mission today
@@ -174,6 +171,9 @@ public class LeagueServiceImpl implements LeagueService {
     if (avgAccuracy < 0.5) {
       multiplier *= 0.8;
     }
+
+    ScoringStrategy strategy = scoringStrategyFactory.getStrategy(clan.getTier());
+    int baseScore = strategy.computeScore(members);
 
     clan.setScoreMultiplier(multiplier);
     clan.setSeasonScore((int) Math.round(baseScore * multiplier));
