@@ -21,7 +21,7 @@ public class LeagueController {
 
   // Called by be-bacaan (internal, no JWT needed from user)
   // be-bacaan calls this right after a student submits a quiz
-  @PostMapping("/api/clan/internal/score-update")
+  @PostMapping("/api/internal/score-update")
   public ResponseEntity<Void> receiveScoreUpdate(@RequestBody ScoreUpdateRequest request) {
     leagueService.handleScoreUpdate(request);
     return ResponseEntity.ok().build();
