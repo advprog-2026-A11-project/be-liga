@@ -81,10 +81,10 @@ class LeagueServiceImplTest {
     when(clanMemberRepository.save(any(ClanMember.class))).thenReturn(savedMember);
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-new", 
-      80, 
-      true, 
-      0.8
+        "user-new", 
+        80, 
+        true, 
+        0.8
     );
     leagueService.handleScoreUpdate(request);
 
@@ -103,10 +103,10 @@ class LeagueServiceImplTest {
         .thenReturn(Optional.of(member));
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-1", 
-      80, 
-      true, 
-      0.8
+        "user-1", 
+        80, 
+        true, 
+        0.8
     );
     leagueService.handleScoreUpdate(request);
 
@@ -126,10 +126,10 @@ class LeagueServiceImplTest {
         .thenReturn(Optional.of(member));
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-1", 
-      15, 
-      false, 
-      0.0
+        "user-1", 
+        15, 
+        false, 
+        0.0
     );
     leagueService.handleScoreUpdate(request);
 
@@ -156,10 +156,10 @@ class LeagueServiceImplTest {
     when(achievementClient.getMissionScore("user-1")).thenReturn(0);
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-1", 
-      80, 
-      true, 
-      0.8
+        "user-1", 
+        80, 
+        true, 
+        0.8
     );
     leagueService.handleScoreUpdate(request);
 
@@ -173,10 +173,10 @@ class LeagueServiceImplTest {
         .thenReturn(Optional.of(member));
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-1", 
-      80, 
-      true, 
-      0.8
+        "user-1", 
+        80, 
+        true, 
+        0.8
     );
     leagueService.handleScoreUpdate(request);
 
@@ -400,10 +400,10 @@ class LeagueServiceImplTest {
     when(achievementClient.getMissionScore("user-b")).thenReturn(0);
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-a", 
-      0, 
-      true, 
-      0.8
+        "user-a", 
+        0, 
+        true, 
+        0.8
     );
     leagueService.handleScoreUpdate(request);
 
@@ -433,10 +433,10 @@ class LeagueServiceImplTest {
     when(achievementClient.getMissionScore("user-1")).thenReturn(0);
 
     ScoreUpdateRequest request = new ScoreUpdateRequest(
-      "user-1", 
-      0, 
-      true, 
-      0.3
+        "user-1", 
+        0, 
+        true, 
+        0.3
     );
     leagueService.handleScoreUpdate(request);
 
