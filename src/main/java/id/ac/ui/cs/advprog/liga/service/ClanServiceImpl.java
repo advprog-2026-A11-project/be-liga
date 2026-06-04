@@ -2,9 +2,9 @@ package id.ac.ui.cs.advprog.liga.service;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
 import id.ac.ui.cs.advprog.liga.model.ClanMember;
+import id.ac.ui.cs.advprog.liga.repository.ClanMemberRepository;
 import id.ac.ui.cs.advprog.liga.repository.ClanRepository;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,8 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ClanServiceImpl implements ClanService {
 
-  @Autowired
-  private ClanRepository clanRepository;
+  private final ClanRepository clanRepository;
+  private final ClanMemberRepository clanMemberRepository;
+
+  public ClanServiceImpl(ClanRepository clanRepository,
+      ClanMemberRepository clanMemberRepository) {
+    this.clanRepository = clanRepository;
+    this.clanMemberRepository = clanMemberRepository;
+  }
 
   @Override
   public Clan create(Clan clan) {
@@ -23,8 +29,13 @@ public class ClanServiceImpl implements ClanService {
   @Override
   public List<Clan> findAll() {
     List<Clan> clans = clanRepository.findAll();
-    clans.sort((c1, c2) -> Integer.compare(c2.getClanScore(), c1.getClanScore()));
+    clans.sort((c1, c2) -> Integer.compare(c2.getSeasonScore(), c1.getSeasonScore()));
     return clans;
+  }
+
+  @Override
+  public List<ClanMember> getMembersByClanId(String clanId) {
+    return clanMemberRepository.findByClanId(clanId);
   }
 
   @Override
@@ -39,64 +50,41 @@ public class ClanServiceImpl implements ClanService {
 
   @Override
   public void delete(String id) {
+    // Remove all members from this clan (they stay in the registry, just unlinked)
+    List<ClanMember> members = clanMemberRepository.findByClanId(id);
+    for (ClanMember member : members) {
+      member.setClanId(null);
+    }
+    clanMemberRepository.saveAll(members);
     clanRepository.deleteById(id);
   }
 
-  // --- Updated Member Operations ---
-
   @Override
-  public void addMember(String clanId, String userId, int score) {
+  public void addMember(String clanId, String userId) {
     Clan clan = findById(clanId);
-    if (clan != null) {
-      // Check if user is already in the clan to prevent duplicates
-      boolean alreadyExists = clan.getMembers().stream()
-              .anyMatch(member -> member.getUserId().equals(userId));
-
-      if (!alreadyExists) {
-        clan.getMembers().add(new ClanMember(userId, score));
-        clanRepository.save(clan);
-      }
+    if (clan == null) {
+      return;
     }
+    // Get or create the student's registry entry
+    ClanMember member = clanMemberRepository.findByUserId(userId)
+        .orElseGet(() -> new ClanMember(userId));
+
+    if (member.getClanId() != null) {
+      return; // already in a clan
+    }
+
+    member.setClanId(clanId);
+    clanMemberRepository.save(member);
   }
 
   @Override
   public void removeMemberByUserId(String clanId, String userId) {
-    Clan clan = findById(clanId);
-    if (clan != null) {
-      // Safely removes the member if the userId matches
-      clan.getMembers().removeIf(member -> member.getUserId().equals(userId));
-      clanRepository.save(clan);
-    }
-  }
-
-  @Override
-  public void editMemberScore(String clanId, String userId, int newScore) {
-    Clan clan = findById(clanId);
-    if (clan != null) {
-      // Find the specific member and update their score
-      clan.getMembers().stream()
-              .filter(member -> member.getUserId().equals(userId))
-              .findFirst()
-              .ifPresent(member -> {
-                member.setScore(newScore);
-                clanRepository.save(clan);
-              });
-    }
-  }
-
-  @Override
-  public boolean isUserInAnyClan(String userId) {
-    // Checks all clans to see if this userId exists in any member list
-    return findAll().stream()
-            .anyMatch(clan -> clan.getMembers().stream()
-                    .anyMatch(member -> member.getUserId().equals(userId)));
-  }
-
-  @Override
-  public boolean hasPendingApplication(String userId) {
-    // Checks if the user is currently in ANY clan's applicant list
-    return findAll().stream()
-            .anyMatch(clan -> clan.getApplicantIds().contains(userId));
+    clanMemberRepository.findByUserId(userId).ifPresent(member -> {
+      if (clanId.equals(member.getClanId())) {
+        member.setClanId(null);
+        clanMemberRepository.save(member);
+      }
+    });
   }
 
   @Override
@@ -111,13 +99,13 @@ public class ClanServiceImpl implements ClanService {
   @Override
   public void acceptApplicant(String clanId, String applicantId) {
     Clan clan = findById(clanId);
-    if (clan != null && clan.getApplicantIds().contains(applicantId)) {
-      // Remove from applicants
-      clan.getApplicantIds().remove(applicantId);
-      // Add to official members with 0 score
-      clan.getMembers().add(new ClanMember(applicantId, 0));
-      clanRepository.save(clan);
+    if (clan == null || !clan.getApplicantIds().contains(applicantId)) {
+      return;
     }
+    
+    clan.getApplicantIds().remove(applicantId);
+    clanRepository.save(clan);
+    addMember(clanId, applicantId);
   }
 
   @Override
@@ -131,8 +119,19 @@ public class ClanServiceImpl implements ClanService {
 
   @Override
   public void cancelApplication(String clanId, String userId) {
-    // This does the exact same thing as rejectApplicant, but having
-    // two methods makes our intentions clearer in the controller!
     rejectApplicant(clanId, userId);
+  }
+
+  @Override
+  public boolean isUserInAnyClan(String userId) {
+    return clanMemberRepository.findByUserId(userId)
+        .map(m -> m.getClanId() != null)
+        .orElse(false);
+  }
+
+  @Override
+  public boolean hasPendingApplication(String userId) {
+    return clanRepository.findAll().stream()
+        .anyMatch(clan -> clan.getApplicantIds().contains(userId));
   }
 }
