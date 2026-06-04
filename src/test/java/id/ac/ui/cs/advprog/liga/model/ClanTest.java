@@ -1,131 +1,65 @@
 package id.ac.ui.cs.advprog.liga.model;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("checkstyle:MethodName")
 class ClanTest {
 
-  private Clan clan;
-
-  @BeforeEach
-  void setUp() {
-    clan = new Clan();
-    clan.setClanName("Test Clan");
-    clan.setLeaderId("leader-001");
-  }
-
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testClanIdIsGeneratedOnCreation() {
+  void constructor_generatesNonNullId() {
+    Clan clan = new Clan();
     assertNotNull(clan.getClanId());
-    assertFalse(clan.getClanId().isBlank());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testTwoClansHaveDifferentIds() {
-    Clan another = new Clan();
-    assertNotEquals(clan.getClanId(), another.getClanId());
+  void constructor_setsDefaultTierToBronze() {
+    Clan clan = new Clan();
+    assertEquals("Bronze", clan.getTier());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetClanScore_NoMembers_ReturnsZero() {
-    assertEquals(0, clan.getClanScore());
+  void constructor_setsDefaultSeasonScoreToZero() {
+    Clan clan = new Clan();
+    assertEquals(0, clan.getSeasonScore());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetClanScore_WithMembers_ReturnsSumOfScores() {
-    clan.getMembers().add(new ClanMember("user-1", 500));
-    clan.getMembers().add(new ClanMember("user-2", 300));
-    assertEquals(800, clan.getClanScore());
+  void constructor_setsDefaultScoreMultiplierToOne() {
+    Clan clan = new Clan();
+    assertEquals(1.0, clan.getScoreMultiplier(), 0.001);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Bronze_ScoreLessThan1000() {
-    clan.getMembers().add(new ClanMember("user-1", 999));
-    assertEquals("Bronze", clan.getRankTier());
+  void constructor_initializesEmptyApplicantIds() {
+    Clan clan = new Clan();
+    assertNotNull(clan.getApplicantIds());
+    assertTrue(clan.getApplicantIds().isEmpty());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Silver_ScoreExactly1000() {
-    clan.getMembers().add(new ClanMember("user-1", 1000));
-    assertEquals("Silver", clan.getRankTier());
+  void setters_updateFields() {
+    Clan clan = new Clan();
+    clan.setClanName("TestClan");
+    clan.setLeaderId("leader-123");
+    clan.setTier("Gold");
+    clan.setSeasonScore(500);
+    clan.setScoreMultiplier(1.2);
+
+    assertEquals("TestClan", clan.getClanName());
+    assertEquals("leader-123", clan.getLeaderId());
+    assertEquals("Gold", clan.getTier());
+    assertEquals(500, clan.getSeasonScore());
+    assertEquals(1.2, clan.getScoreMultiplier(), 0.001);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Silver_ScoreBetween1000And1999() {
-    clan.getMembers().add(new ClanMember("user-1", 1500));
-    assertEquals("Silver", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Gold_ScoreExactly2000() {
-    clan.getMembers().add(new ClanMember("user-1", 2000));
-    assertEquals("Gold", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Platinum_ScoreExactly3000() {
-    clan.getMembers().add(new ClanMember("user-1", 3000));
-    assertEquals("Platinum", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Diamond_ScoreExactly4000() {
-    clan.getMembers().add(new ClanMember("user-1", 4000));
-    assertEquals("Diamond", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_Diamond_ScoreAbove4000() {
-    clan.getMembers().add(new ClanMember("user-1", 5000));
-    assertEquals("Diamond", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testGetRankTier_NoMembers_IsBronze() {
-    assertEquals("Bronze", clan.getRankTier());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testMembersListIsInitiallyEmpty() {
-    Clan newClan = new Clan();
-    assertNotNull(newClan.getMembers());
-    assertTrue(newClan.getMembers().isEmpty());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testApplicantIdsListIsInitiallyEmpty() {
-    Clan newClan = new Clan();
-    assertNotNull(newClan.getApplicantIds());
-    assertTrue(newClan.getApplicantIds().isEmpty());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testSetAndGetClanName() {
-    clan.setClanName("New Name");
-    assertEquals("New Name", clan.getClanName());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testSetAndGetLeaderId() {
-    clan.setLeaderId("new-leader");
-    assertEquals("new-leader", clan.getLeaderId());
+  void twoClans_haveDistinctIds() {
+    Clan first = new Clan();
+    Clan second = new Clan();
+    assertTrue(!first.getClanId().equals(second.getClanId()));
   }
 }

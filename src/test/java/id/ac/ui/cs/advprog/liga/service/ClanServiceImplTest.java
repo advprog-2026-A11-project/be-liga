@@ -1,11 +1,18 @@
 package id.ac.ui.cs.advprog.liga.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import id.ac.ui.cs.advprog.liga.model.Clan;
 import id.ac.ui.cs.advprog.liga.model.ClanMember;
+import id.ac.ui.cs.advprog.liga.repository.ClanMemberRepository;
 import id.ac.ui.cs.advprog.liga.repository.ClanRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,310 +24,281 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("checkstyle:MethodName")
 @ExtendWith(MockitoExtension.class)
 class ClanServiceImplTest {
 
   @Mock
   private ClanRepository clanRepository;
 
+  @Mock
+  private ClanMemberRepository clanMemberRepository;
+
   @InjectMocks
   private ClanServiceImpl clanService;
 
   private Clan clan;
-  private static final String CLAN_ID = "clan-001";
-  private static final String LEADER_ID = "leader-001";
-  private static final String USER_ID = "user-001";
 
   @BeforeEach
   void setUp() {
     clan = new Clan();
-    clan.setClanId(CLAN_ID);
-    clan.setClanName("Test Clan");
-    clan.setLeaderId(LEADER_ID);
+    clan.setClanName("TestClan");
+    clan.setLeaderId("leader-1");
   }
 
-  // --- CRUD ---
+  // --- create ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testCreate_SavesAndReturnsClan() {
+  void create_savesAndReturnsClan() {
     when(clanRepository.save(clan)).thenReturn(clan);
     Clan result = clanService.create(clan);
-    assertEquals(clan, result);
-    verify(clanRepository, times(1)).save(clan);
+    assertNotNull(result);
+    assertEquals("TestClan", result.getClanName());
+    verify(clanRepository).save(clan);
   }
 
+  // --- findAll ---
+
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testFindAll_ReturnsSortedByScoreDescending() {
-    Clan clan1 = new Clan();
-    clan1.getMembers().add(new ClanMember("u1", 100));
+  void findAll_returnsSortedBySeasonScoreDescending() {
+    Clan low = new Clan();
+    low.setSeasonScore(10);
+    Clan high = new Clan();
+    high.setSeasonScore(100);
+    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(low, high)));
 
-    Clan clan2 = new Clan();
-    clan2.getMembers().add(new ClanMember("u2", 500));
-
-    Clan clan3 = new Clan();
-    clan3.getMembers().add(new ClanMember("u3", 300));
-
-    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan1, clan2, clan3)));
     List<Clan> result = clanService.findAll();
+    assertEquals(100, result.get(0).getSeasonScore());
+    assertEquals(10, result.get(1).getSeasonScore());
+  }
 
-    assertEquals(500, result.get(0).getClanScore());
-    assertEquals(300, result.get(1).getClanScore());
-    assertEquals(100, result.get(2).getClanScore());
+  // --- findById ---
+
+  @Test
+  void findById_returnsClanWhenFound() {
+    when(clanRepository.findById("clan-1")).thenReturn(Optional.of(clan));
+    Clan result = clanService.findById("clan-1");
+    assertNotNull(result);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testFindById_ExistingId_ReturnsClan() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-    Clan result = clanService.findById(CLAN_ID);
-    assertEquals(clan, result);
+  void findById_returnsNullWhenNotFound() {
+    when(clanRepository.findById("missing")).thenReturn(Optional.empty());
+    Clan result = clanService.findById("missing");
+    assertNull(result);
   }
 
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testFindById_NonExistingId_ReturnsNull() {
-    when(clanRepository.findById("unknown")).thenReturn(Optional.empty());
-    assertNull(clanService.findById("unknown"));
-  }
+  // --- update ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testUpdate_CallsSave() {
+  void update_savesClan() {
     clanService.update(clan);
-    verify(clanRepository, times(1)).save(clan);
+    verify(clanRepository).save(clan);
   }
 
+  // --- delete ---
+
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testDelete_CallsDeleteById() {
-    clanService.delete(CLAN_ID);
-    verify(clanRepository, times(1)).deleteById(CLAN_ID);
+  void delete_unlinksAllMembersBeforeDeleting() {
+    ClanMember member = new ClanMember("user-1");
+    member.setClanId(clan.getClanId());
+    when(clanMemberRepository.findByClanId(clan.getClanId()))
+        .thenReturn(List.of(member));
+
+    clanService.delete(clan.getClanId());
+
+    assertNull(member.getClanId());
+    verify(clanMemberRepository).saveAll(any());
+    verify(clanRepository).deleteById(clan.getClanId());
   }
 
   // --- addMember ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAddMember_ClanExists_UserNotAlreadyMember_AddsMember() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-    clanService.addMember(CLAN_ID, USER_ID, 100);
+  void addMember_addsMemberWhenNotAlreadyInClan() {
+    ClanMember member = new ClanMember("user-1");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
 
-    assertEquals(1, clan.getMembers().size());
-    assertEquals(USER_ID, clan.getMembers().get(0).getUserId());
-    assertEquals(100, clan.getMembers().get(0).getScore());
-    verify(clanRepository).save(clan);
+    clanService.addMember(clan.getClanId(), "user-1");
+
+    assertEquals(clan.getClanId(), member.getClanId());
+    verify(clanMemberRepository).save(member);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAddMember_UserAlreadyMember_DoesNotAddDuplicate() {
-    clan.getMembers().add(new ClanMember(USER_ID, 50));
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-
-    clanService.addMember(CLAN_ID, USER_ID, 100);
-
-    assertEquals(1, clan.getMembers().size());
-    verify(clanRepository, never()).save(any());
+  void addMember_doesNothingWhenClanNotFound() {
+    when(clanRepository.findById("missing")).thenReturn(Optional.empty());
+    clanService.addMember("missing", "user-1");
+    verify(clanMemberRepository, never()).save(any());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAddMember_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.addMember(CLAN_ID, USER_ID, 100);
-    verify(clanRepository, never()).save(any());
+  void addMember_doesNothingWhenMemberAlreadyInClan() {
+    ClanMember member = new ClanMember("user-1");
+    member.setClanId("other-clan");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
+
+    clanService.addMember(clan.getClanId(), "user-1");
+
+    assertEquals("other-clan", member.getClanId());
+    verify(clanMemberRepository, never()).save(any());
+  }
+
+  @Test
+  void addMember_createsNewRegistryEntryWhenUserUnknown() {
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    when(clanMemberRepository.findByUserId("new-user")).thenReturn(Optional.empty());
+
+    clanService.addMember(clan.getClanId(), "new-user");
+
+    verify(clanMemberRepository).save(any(ClanMember.class));
   }
 
   // --- removeMemberByUserId ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testRemoveMemberByUserId_RemovesMember() {
-    clan.getMembers().add(new ClanMember(USER_ID, 100));
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
+  void removeMemberByUserId_setsClanIdToNull() {
+    ClanMember member = new ClanMember("user-1");
+    member.setClanId(clan.getClanId());
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
 
-    clanService.removeMemberByUserId(CLAN_ID, USER_ID);
+    clanService.removeMemberByUserId(clan.getClanId(), "user-1");
 
-    assertTrue(clan.getMembers().isEmpty());
-    verify(clanRepository).save(clan);
+    assertNull(member.getClanId());
+    verify(clanMemberRepository).save(member);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testRemoveMemberByUserId_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.removeMemberByUserId(CLAN_ID, USER_ID);
-    verify(clanRepository, never()).save(any());
-  }
+  void removeMemberByUserId_doesNothingWhenUserInDifferentClan() {
+    ClanMember member = new ClanMember("user-1");
+    member.setClanId("other-clan");
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
 
-  // --- editMemberScore ---
+    clanService.removeMemberByUserId(clan.getClanId(), "user-1");
 
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testEditMemberScore_UpdatesScore() {
-    clan.getMembers().add(new ClanMember(USER_ID, 100));
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-
-    clanService.editMemberScore(CLAN_ID, USER_ID, 999);
-
-    assertEquals(999, clan.getMembers().get(0).getScore());
-    verify(clanRepository).save(clan);
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testEditMemberScore_UserNotInClan_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-    clanService.editMemberScore(CLAN_ID, USER_ID, 999);
-    verify(clanRepository, never()).save(any());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testEditMemberScore_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.editMemberScore(CLAN_ID, USER_ID, 999);
-    verify(clanRepository, never()).save(any());
-  }
-
-  // --- isUserInAnyClan ---
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testIsUserInAnyClan_UserIsMember_ReturnsTrue() {
-    clan.getMembers().add(new ClanMember(USER_ID, 100));
-    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
-
-    assertTrue(clanService.isUserInAnyClan(USER_ID));
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testIsUserInAnyClan_UserIsNotMember_ReturnsFalse() {
-    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
-    assertFalse(clanService.isUserInAnyClan(USER_ID));
-  }
-
-  // --- hasPendingApplication ---
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testHasPendingApplication_UserHasApplied_ReturnsTrue() {
-    clan.getApplicantIds().add(USER_ID);
-    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
-
-    assertTrue(clanService.hasPendingApplication(USER_ID));
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testHasPendingApplication_UserHasNotApplied_ReturnsFalse() {
-    when(clanRepository.findAll()).thenReturn(new ArrayList<>(List.of(clan)));
-    assertFalse(clanService.hasPendingApplication(USER_ID));
+    assertEquals("other-clan", member.getClanId());
+    verify(clanMemberRepository, never()).save(any());
   }
 
   // --- applyToClan ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testApplyToClan_AddsUserToApplicants() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-    clanService.applyToClan(CLAN_ID, USER_ID);
-
-    assertTrue(clan.getApplicantIds().contains(USER_ID));
+  void applyToClan_addsUserToApplicantList() {
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    clanService.applyToClan(clan.getClanId(), "user-1");
+    assertTrue(clan.getApplicantIds().contains("user-1"));
     verify(clanRepository).save(clan);
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testApplyToClan_UserAlreadyApplied_DoesNotAddDuplicate() {
-    clan.getApplicantIds().add(USER_ID);
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
+  void applyToClan_doesNothingWhenAlreadyApplied() {
+    clan.getApplicantIds().add("user-1");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
 
-    clanService.applyToClan(CLAN_ID, USER_ID);
+    clanService.applyToClan(clan.getClanId(), "user-1");
 
     assertEquals(1, clan.getApplicantIds().size());
-    verify(clanRepository, never()).save(any());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testApplyToClan_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.applyToClan(CLAN_ID, USER_ID);
     verify(clanRepository, never()).save(any());
   }
 
   // --- acceptApplicant ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAcceptApplicant_MovesUserFromApplicantsToMembers() {
-    clan.getApplicantIds().add(USER_ID);
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
+  void acceptApplicant_removesFromApplicantsAndAddsMember() {
+    clan.getApplicantIds().add("user-1");
+    ClanMember member = new ClanMember("user-1");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
 
-    clanService.acceptApplicant(CLAN_ID, USER_ID);
+    clanService.acceptApplicant(clan.getClanId(), "user-1");
 
-    assertFalse(clan.getApplicantIds().contains(USER_ID));
-    assertTrue(clan.getMembers().stream().anyMatch(m -> m.getUserId().equals(USER_ID)));
-    assertEquals(0, clan.getMembers().stream()
-        .filter(m -> m.getUserId().equals(USER_ID))
-        .findFirst().get().getScore());
-    verify(clanRepository).save(clan);
+    assertFalse(clan.getApplicantIds().contains("user-1"));
+    assertEquals(clan.getClanId(), member.getClanId());
   }
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAcceptApplicant_UserNotInApplicants_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
-    clanService.acceptApplicant(CLAN_ID, USER_ID);
-    assertTrue(clan.getMembers().isEmpty());
-    verify(clanRepository, never()).save(any());
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testAcceptApplicant_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.acceptApplicant(CLAN_ID, USER_ID);
-    verify(clanRepository, never()).save(any());
+  void acceptApplicant_doesNothingWhenApplicantNotInList() {
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
+    clanService.acceptApplicant(clan.getClanId(), "user-not-applied");
+    verify(clanMemberRepository, never()).save(any());
   }
 
   // --- rejectApplicant ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testRejectApplicant_RemovesUserFromApplicants() {
-    clan.getApplicantIds().add(USER_ID);
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
+  void rejectApplicant_removesFromApplicantList() {
+    clan.getApplicantIds().add("user-1");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
 
-    clanService.rejectApplicant(CLAN_ID, USER_ID);
+    clanService.rejectApplicant(clan.getClanId(), "user-1");
 
-    assertFalse(clan.getApplicantIds().contains(USER_ID));
+    assertFalse(clan.getApplicantIds().contains("user-1"));
     verify(clanRepository).save(clan);
-  }
-
-  @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testRejectApplicant_ClanNotFound_DoesNothing() {
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.empty());
-    clanService.rejectApplicant(CLAN_ID, USER_ID);
-    verify(clanRepository, never()).save(any());
   }
 
   // --- cancelApplication ---
 
   @Test
-  @SuppressWarnings("checkstyle:MethodName")
-  void testCancelApplication_DelegatesToRejectApplicant() {
-    clan.getApplicantIds().add(USER_ID);
-    when(clanRepository.findById(CLAN_ID)).thenReturn(Optional.of(clan));
+  void cancelApplication_behavesLikeReject() {
+    clan.getApplicantIds().add("user-1");
+    when(clanRepository.findById(clan.getClanId())).thenReturn(Optional.of(clan));
 
-    clanService.cancelApplication(CLAN_ID, USER_ID);
+    clanService.cancelApplication(clan.getClanId(), "user-1");
 
-    assertFalse(clan.getApplicantIds().contains(USER_ID));
-    verify(clanRepository).save(clan);
+    assertFalse(clan.getApplicantIds().contains("user-1"));
+  }
+
+  // --- isUserInAnyClan ---
+
+  @Test
+  void isUserInAnyClan_returnsTrueWhenMemberHasClanId() {
+    ClanMember member = new ClanMember("user-1");
+    member.setClanId("some-clan");
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
+    assertTrue(clanService.isUserInAnyClan("user-1"));
+  }
+
+  @Test
+  void isUserInAnyClan_returnsFalseWhenClanIdIsNull() {
+    ClanMember member = new ClanMember("user-1");
+    when(clanMemberRepository.findByUserId("user-1")).thenReturn(Optional.of(member));
+    assertFalse(clanService.isUserInAnyClan("user-1"));
+  }
+
+  @Test
+  void isUserInAnyClan_returnsFalseWhenUserNotRegistered() {
+    when(clanMemberRepository.findByUserId("unknown")).thenReturn(Optional.empty());
+    assertFalse(clanService.isUserInAnyClan("unknown"));
+  }
+
+  // --- hasPendingApplication ---
+
+  @Test
+  void hasPendingApplication_returnsTrueWhenApplicantInAnyClan() {
+    clan.getApplicantIds().add("user-1");
+    when(clanRepository.findAll()).thenReturn(List.of(clan));
+    assertTrue(clanService.hasPendingApplication("user-1"));
+  }
+
+  @Test
+  void hasPendingApplication_returnsFalseWhenNotAppliedAnywhere() {
+    when(clanRepository.findAll()).thenReturn(List.of(clan));
+    assertFalse(clanService.hasPendingApplication("user-1"));
+  }
+
+  // --- getMembersByClanId ---
+
+  @Test
+  void getMembersByClanId_delegatesToRepository() {
+    ClanMember member = new ClanMember("user-1");
+    when(clanMemberRepository.findByClanId(clan.getClanId()))
+        .thenReturn(List.of(member));
+
+    List<ClanMember> result = clanService.getMembersByClanId(clan.getClanId());
+
+    assertEquals(1, result.size());
+    assertEquals("user-1", result.get(0).getUserId());
   }
 }
